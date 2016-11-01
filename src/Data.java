@@ -1,7 +1,9 @@
+
 public class Data {
-	long lat;
-	long lon;
-	
+	long id;
 	int time;
-	int segID;
+	double lat;
+	double lon;
+	
+	
 }

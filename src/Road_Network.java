@@ -16,7 +16,6 @@ public class Road_Network {
 	public void ReadInNodes(){
 		String id, lat, lon;
 		
-		long ID;
 		double LAT, LON;
 		
 		String line = null;
@@ -29,6 +28,8 @@ public class Road_Network {
             BufferedReader bufferedReader = new BufferedReader(NodeIn);
             
             int start, end;
+            System.out.print("Reading in Nodes... ");
+            long start_time = System.currentTimeMillis();
             while((line = bufferedReader.readLine()) != null) {
                 start = 0;
                 end = line.indexOf(",");
@@ -42,14 +43,15 @@ public class Road_Network {
                 end = line.length();
                 lon = line.substring(start, end);
                 
-                ID = Long.parseLong(id);
                 LAT = Double.parseDouble(lat);
                 LON = Double.parseDouble(lon);
                 
                 //System.out.println(ID + ", " + LAT + ", " + LON);
                 
-                N.add(new Node(ID, LAT, LON));
-            }   
+                N.add(new Node(id, LAT, LON));
+            }
+            long end_time = System.currentTimeMillis();
+            System.out.println("Completed: " + (end_time - start_time) + " MilliSeconds");
 
             // Always close files.
             bufferedReader.close();
@@ -64,11 +66,7 @@ public class Road_Network {
 	}
 	
 	public void ReadInEdges(){
-		String id;
-		String node1;
-		String node2;
-		
-		long ID, NODE1, NODE2;
+		String id, node1, node2;
 		
 		String line = null;
 		try{
@@ -80,6 +78,8 @@ public class Road_Network {
             BufferedReader bufferedReader = new BufferedReader(EdgeIn);
             
             int start, end;
+            System.out.print("Reading in Edges... ");
+            long start_time = System.currentTimeMillis();
             while((line = bufferedReader.readLine()) != null) {
                 start = 0;
                 end = line.indexOf(",");
@@ -92,15 +92,13 @@ public class Road_Network {
                 start = end + 1;
                 end = line.indexOf(",", start);
                 node2 = line.substring(start, end);
-                
-                ID = Long.parseLong(id);
-                NODE1 = Long.parseLong(node1);
-                NODE2 = Long.parseLong(node2);
-                
+                                
                 //System.out.println(ID + ", " + NODE1 + ", " + NODE2);
                 
-                E.add(new Edge(ID, NODE1, NODE2));
-            }   
+                E.add(new Edge(id, node1, node2));
+            }
+            long end_time = System.currentTimeMillis();
+            System.out.println("Completed: " + (end_time - start_time) + " MilliSeconds");
 
             // Always close files.
             bufferedReader.close();  

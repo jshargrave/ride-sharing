@@ -22,9 +22,13 @@ public class GPS_Data {
             // Always wrap FileReader in BufferedReader.
             BufferedReader bufferedReader = new BufferedReader(GPSIn);
             
+            System.out.print("Reading in GPS data... ");
+            long start_time = System.currentTimeMillis();
             while((line = bufferedReader.readLine()) != null) {
                 D.add(SanFransiscoGPS(line)); //using the SanFransisco method
-            }   
+            }
+            long end_time = System.currentTimeMillis();
+            System.out.println("Completed: " + (end_time - start_time) + " MilliSeconds");
 
             // Always close files.
             bufferedReader.close();
@@ -40,7 +44,6 @@ public class GPS_Data {
 	
 	//the read in method for a sanFransisco GPS dataset
 	public Data SanFransiscoGPS(String line){
-		long ID; 
 		int TIME;
 		double LAT, LON;
 		
@@ -63,13 +66,13 @@ public class GPS_Data {
         end = line.length();
         lon = line.substring(start, end);
         
-        ID = Long.parseLong(id);
         TIME = convertToTime(time);
         LAT = Double.parseDouble(lat);
         LON = Double.parseDouble(lon);
         
-        return new Data(ID, TIME, LAT, LON);
+        return new Data(id, TIME, LAT, LON);
 	}
+	
 	
 	//takes a string time of the format HH:MM:SS and converts it to seconds
 	public int convertToTime(String time){

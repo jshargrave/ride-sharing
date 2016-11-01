@@ -5,5 +5,7 @@ public class Ridesharing {
 		//R.printNodes();
 		//R.printEdges();
 		//G.printGPS();
+		
+		System.out.println("Finished");
 	}
 }

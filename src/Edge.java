@@ -1,10 +1,10 @@
 
 public class Edge {
-	long id;
-	long node1;
-	long node2;
+	String id;
+	String node1;
+	String node2;
 	
-	public Edge(long Eid, long Enode1, long Enode2){
+	public Edge(String Eid, String Enode1, String Enode2){
 		id = Eid;
 		node1 = Enode1;
 		node2 = Enode2;

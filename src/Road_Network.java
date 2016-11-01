@@ -14,9 +14,7 @@ public class Road_Network {
 	}
 	
 	public void ReadInNodes(){
-		String id;
-		String lat;
-		String lon;
+		String id, lat, lon;
 		
 		long ID;
 		double LAT, LON;
@@ -54,7 +52,7 @@ public class Road_Network {
             }   
 
             // Always close files.
-            bufferedReader.close();  
+            bufferedReader.close();
 		}
 		catch(FileNotFoundException ex){
 			System.out.println("Unable to open file " + NodeFile + " ...");
@@ -108,10 +106,10 @@ public class Road_Network {
             bufferedReader.close();  
 		}
 		catch(FileNotFoundException ex){
-			System.out.println("Unable to open file " + NodeFile + " ...");
+			System.out.println("Unable to open file " + EdgeFile + " ...");
 		}
 		catch(IOException ex){
-			System.out.println("Error reading file " + NodeFile + " ...");
+			System.out.println("Error reading file " + EdgeFile + " ...");
 		}
 		return;
 	}

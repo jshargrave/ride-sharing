@@ -4,57 +4,90 @@ import java.util.*;
 public class Road_Network {	
 	String NodeFile = "files/Nodes.txt";
 	String EdgeFile = "files/Edges.txt";
+	String SegmentFile = "files/Segment.txt";
 	
-	LinkedList<Node> N = new LinkedList<Node>();
-	LinkedList<Edge> E = new LinkedList<Edge>();
+	LinkedList<Segment> S = new LinkedList<Segment>();
 
 	public Road_Network(){ //build road network
-		ReadInNodes();
-		ReadInEdges();
+		ReadInSegment();
 	}
 	
-	public void ReadInNodes(){
-		String id, lat, lon;
+	public void ReadInSegment(){
+		String N_id, E_id, E_node1, E_node2, lat, lon;
+		double LAT1 = 0, LAT2 = 0, LON1 = 0, LON2 = 0;
 		
-		double LAT, LON;
-		
-		String line = null;
 		try{
 			
 			// FileReader reads text files in the default encoding.
-            FileReader NodeIn = new FileReader(NodeFile);
+            
+            FileReader EdgeIn = new FileReader(EdgeFile);
 
             // Always wrap FileReader in BufferedReader.
-            BufferedReader bufferedReader = new BufferedReader(NodeIn);
+            
+            BufferedReader EdgeReader = new BufferedReader(EdgeIn);
+            
+            String EdgeLine = null;
+            String NodeLine = null;
             
             int start, end;
-            System.out.print("Reading in Nodes... ");
+                    
+            System.out.print("Reading in segments... ");
+            
             long start_time = System.currentTimeMillis();
-            while((line = bufferedReader.readLine()) != null) {
-                start = 0;
-                end = line.indexOf(",");
-            	id = line.substring(start, end);
+            while((EdgeLine = EdgeReader.readLine()) != null){
+            	
+            	start = 0;
+            	end = EdgeLine.indexOf(",", start);
+            	E_id = EdgeLine.substring(start, end);
             	
             	start = end + 1;
-            	end = line.indexOf(",", start);
-                lat = line.substring(start, end);
-                
-                start = end + 1;
-                end = line.length();
-                lon = line.substring(start, end);
-                
-                LAT = Double.parseDouble(lat);
-                LON = Double.parseDouble(lon);
-                
-                //System.out.println(ID + ", " + LAT + ", " + LON);
-                
-                N.add(new Node(id, LAT, LON));
+            	end = EdgeLine.indexOf(",", start);
+            	E_node1 = EdgeLine.substring(start, end);
+            	
+            	start = end + 1;
+            	end = EdgeLine.indexOf(",", start);
+            	E_node2 = EdgeLine.substring(start, end);
+            	
+            	FileReader NodeIn = new FileReader(NodeFile);
+            	BufferedReader NodeReader = new BufferedReader(NodeIn);
+            	while((NodeLine = NodeReader.readLine()) != null){
+              		start = 0;
+            		end = NodeLine.indexOf(",", start);
+            		N_id = NodeLine.substring(start, end);
+            		  		
+            		if(N_id.equals(E_node1)){
+            			start = end + 1;
+            			end = NodeLine.indexOf(",", start);
+            			lat = NodeLine.substring(start, end);
+            			
+            			start = end + 1;
+            			end = NodeLine.length();
+            			lon = NodeLine.substring(start, end);
+            			
+            			LAT1 = Double.parseDouble(lat);
+            			LON1 = Double.parseDouble(lat);
+            		}
+            		else if(N_id.equals(E_node2)){
+            			start = end + 1;
+            			end = NodeLine.indexOf(",", start);
+            			lat = NodeLine.substring(start, end);
+            			
+            			start = end + 1;
+            			end = NodeLine.length();
+            			lon = NodeLine.substring(start, end);
+            			
+            			LAT2 = Double.parseDouble(lat);
+            			LON2 = Double.parseDouble(lat);
+            		}
+            	}
+            	
+            	S.add(new Segment(E_id, E_node1, E_node2, LAT1, LAT2, LON1, LON2));
+            	NodeReader.close();
             }
-            long end_time = System.currentTimeMillis();
-            System.out.println("Completed: " + (end_time - start_time) + " MilliSeconds");
-
-            // Always close files.
-            bufferedReader.close();
+            long total_time = System.currentTimeMillis() - start_time;
+            System.out.println("Completed: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + "Mins");
+                    
+            EdgeReader.close();
 		}
 		catch(FileNotFoundException ex){
 			System.out.println("Unable to open file " + NodeFile + " ...");
@@ -65,74 +98,22 @@ public class Road_Network {
 		return;
 	}
 	
-	public void ReadInEdges(){
-		String id, node1, node2;
-		
-		String line = null;
-		try{
-			
-			// FileReader reads text files in the default encoding.
-            FileReader EdgeIn = new FileReader(EdgeFile);
-
-            // Always wrap FileReader in BufferedReader.
-            BufferedReader bufferedReader = new BufferedReader(EdgeIn);
-            
-            int start, end;
-            System.out.print("Reading in Edges... ");
-            long start_time = System.currentTimeMillis();
-            while((line = bufferedReader.readLine()) != null) {
-                start = 0;
-                end = line.indexOf(",");
-            	id = line.substring(start, end);
-            	
-            	start = end + 1;
-            	end = line.indexOf(",", start);
-                node1 = line.substring(start, end);
-                
-                start = end + 1;
-                end = line.indexOf(",", start);
-                node2 = line.substring(start, end);
-                                
-                //System.out.println(ID + ", " + NODE1 + ", " + NODE2);
-                
-                E.add(new Edge(id, node1, node2));
-            }
-            long end_time = System.currentTimeMillis();
-            System.out.println("Completed: " + (end_time - start_time) + " MilliSeconds");
-
-            // Always close files.
-            bufferedReader.close();  
-		}
-		catch(FileNotFoundException ex){
-			System.out.println("Unable to open file " + EdgeFile + " ...");
-		}
-		catch(IOException ex){
-			System.out.println("Error reading file " + EdgeFile + " ...");
+	public void printSegments(){
+		for(int i = 0; i < S.size(); i++){
+			System.out.println(S.get(i).id);
 		}
 		return;
 	}
 	
-	public void printNodes(){
-		long size = N.size();
-		Node tmp;
-		
-		System.out.println("Numer of Nodes: " + size);
-		for(int i = 0; i < size; i++){
-			tmp = N.get(i);
-			System.out.println(tmp.id + ", " + tmp.lat + ", " + tmp.lon);
+	public void SearchSegments(){
+		long start_time = System.currentTimeMillis();
+		for(int i = 0; i < S.size(); i++){
+			System.out.println(S.get(i).id);
 		}
-		return;
+		
+		long total_time = System.currentTimeMillis() - start_time;
+        System.out.println("Completed: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + "Mins");
 	}
 	
-	public void printEdges(){
-		long size = E.size();
-		Edge tmp;
-		
-		System.out.println("Numer of Edges: " + size);
-		for(int i = 0; i < size; i++){
-			tmp = E.get(i);
-			System.out.println(tmp.id + ", " + tmp.node1 + ", " + tmp.node2);
-		}
-		return;
-	}
+	
 }

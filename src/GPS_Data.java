@@ -27,8 +27,8 @@ public class GPS_Data {
             while((line = bufferedReader.readLine()) != null) {
                 D.add(SanFransiscoGPS(line)); //using the SanFransisco method
             }
-            long end_time = System.currentTimeMillis();
-            System.out.println("Completed: " + (end_time - start_time) + " MilliSeconds");
+            long total_time = System.currentTimeMillis() - start_time;
+            System.out.println("Completed: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + "Mins");
 
             // Always close files.
             bufferedReader.close();

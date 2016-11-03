@@ -5,6 +5,7 @@ public class Road_Network {
 	String NodeFile = "files/Nodes.txt";
 	String EdgeFile = "files/Edges.txt";
 	String SegmentFile = "files/Segment.txt";
+	int MAX_DIS =  50; //ft away from node to be matched to it
 	
 	LinkedList<Segment> S = new LinkedList<Segment>();
 
@@ -85,7 +86,7 @@ public class Road_Network {
             	NodeReader.close();
             }
             long total_time = System.currentTimeMillis() - start_time;
-            System.out.println("Completed: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + "Mins");
+            System.out.println("Completed: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
                     
             EdgeReader.close();
 		}
@@ -98,22 +99,63 @@ public class Road_Network {
 		return;
 	}
 	
+	public void segmentMatch(Data d){
+		//gps data d is given
+		//LinkedList of Segment S is given
+		
+		int matches = 0;
+		for(int i = 0; i < S.size(); i++){
+			if(distance(S.get(i).lat1, S.get(i).lon1, d.lat, d.lon, "F") < MAX_DIS){
+				d.edgeID = S.get(i).id;
+				matches++;
+			}
+			if(distance(S.get(i).lat2, S.get(i).lon2, d.lat, d.lon, "F") < MAX_DIS){
+				d.edgeID = S.get(i).id;
+				matches++;
+			}
+			if(matches > 1){
+				//purge data because to is matching with multiple nodes
+			}
+		}
+		
+	}
+	
+	private static double distance(double lat1, double lon1, double lat2, double lon2, String unit) {
+		double theta = lon1 - lon2;
+		double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
+		dist = Math.acos(dist);
+		dist = rad2deg(dist);
+		dist = dist * 60 * 1.1515;
+		if (unit == "K") {
+			dist = dist * 1.609344;
+		} else if (unit == "N") {
+			dist = dist * 0.8684;
+		}
+		else if(unit == "F"){
+			dist = dist * 5280;
+		}
+
+		return (dist);
+	}
+
+	/*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
+	/*::	This function converts decimal degrees to radians						 :*/
+	/*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
+	private static double deg2rad(double deg) {
+		return (deg * Math.PI / 180.0);
+	}
+
+	/*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
+	/*::	This function converts radians to decimal degrees						 :*/
+	/*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
+	private static double rad2deg(double rad) {
+		return (rad * 180 / Math.PI);
+	}
+	
 	public void printSegments(){
 		for(int i = 0; i < S.size(); i++){
 			System.out.println(S.get(i).id);
 		}
 		return;
-	}
-	
-	public void SearchSegments(){
-		long start_time = System.currentTimeMillis();
-		for(int i = 0; i < S.size(); i++){
-			System.out.println(S.get(i).id);
-		}
-		
-		long total_time = System.currentTimeMillis() - start_time;
-        System.out.println("Completed: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + "Mins");
-	}
-	
-	
+	}	
 }

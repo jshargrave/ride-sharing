@@ -1,6 +1,6 @@
 
 public class Data {
-	String id;
+	String id, edgeID;
 	int time;
 	double lat;
 	double lon;

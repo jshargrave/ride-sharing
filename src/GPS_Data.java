@@ -1,10 +1,10 @@
-import java.util.*;
 import java.io.*;
 
 public class GPS_Data {
-	String GPSFile = "files/SanFransisco.txt";
+	String GPSFile = "files/SanFransisco.txt"; //file to read in
 	
-	LinkedList<Data> D = new LinkedList<Data>();
+	String insertTable = "";
+	DBMS database = new DBMS(); //used to read in road network to database
 
 	public GPS_Data(){
 		readInGPS();
@@ -25,7 +25,7 @@ public class GPS_Data {
             System.out.print("Reading in GPS data... ");
             long start_time = System.currentTimeMillis();
             while((line = bufferedReader.readLine()) != null) {
-                D.add(SanFransiscoGPS(line)); //using the SanFransisco method
+                database.query(SanFransiscoGPS(line)); //using the SanFransisco method
             }
             long total_time = System.currentTimeMillis() - start_time;
             System.out.println("Completed: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
@@ -43,10 +43,7 @@ public class GPS_Data {
 	}
 	
 	//the read in method for a sanFransisco GPS dataset
-	public Data SanFransiscoGPS(String line){
-		int TIME;
-		double LAT, LON;
-		
+	public String SanFransiscoGPS(String line){
 		String id, time, lat, lon;
 		int start, end;
 		
@@ -66,11 +63,10 @@ public class GPS_Data {
         end = line.length();
         lon = line.substring(start, end);
         
-        TIME = convertToTime(time);
-        LAT = Double.parseDouble(lat);
-        LON = Double.parseDouble(lon);
+        int TIME = convertToTime(time);
         
-        return new Data(id, TIME, LAT, LON);
+        return "INSERT INTO table_name (id, time, lat, lon) " +
+        			"VALUES ("+id+", "+TIME+", "+lat+", "+lon+")";
 	}
 	
 	
@@ -98,18 +94,6 @@ public class GPS_Data {
 		ST = Integer.parseInt(st);
 		
 		return HT * 60 * 60 + MT * 60 + ST;
-	}
-	
-	public void printGPS(){
-		long size = D.size();
-		Data tmp;
-		
-		System.out.println("Numer of Edges: " + size);
-		for(int i = 0; i < size; i++){
-			tmp = D.get(i);
-			System.out.println(tmp.id + ", " + tmp.time + ", " + tmp.lat + ", " + tmp.lon);
-		}
-		return;
 	}
 }
 

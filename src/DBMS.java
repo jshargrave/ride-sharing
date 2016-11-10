@@ -61,7 +61,7 @@ public class DBMS {
 	}
 	
 	public void buildTables(){
-		String sql = "CREATE TABLE segment " +
+		String sql = "CREATE TABLE incident " +
 				"(id INTEGER not NULL, " +
                 " PRIMARY KEY ( id ))"; 
 		query(sql);

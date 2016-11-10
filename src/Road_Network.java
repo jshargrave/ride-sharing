@@ -7,7 +7,8 @@ public class Road_Network {
 	String SegmentFile = "files/Segment.txt";
 	int MAX_DIS =  50; //ft away from node to be matched to it
 	
-	LinkedList<Segment> S = new LinkedList<Segment>();
+	String insertTable = "";
+	DBMS database = new DBMS(); //used to read in road network to database
 
 	public Road_Network(){ //build road network
 		ReadInSegment();
@@ -82,7 +83,7 @@ public class Road_Network {
             		}
             	}
             	
-            	S.add(new Segment(E_id, E_node1, E_node2, LAT1, LAT2, LON1, LON2));
+            	//database.query(new Segment(E_id, E_node1, E_node2, LAT1, LAT2, LON1, LON2));
             	NodeReader.close();
             }
             long total_time = System.currentTimeMillis() - start_time;
@@ -99,7 +100,7 @@ public class Road_Network {
 		return;
 	}
 	
-	public void segmentMatch(Data d){
+	/*public void segmentMatch(Data d){
 		//gps data d is given
 		//LinkedList of Segment S is given
 		
@@ -118,7 +119,7 @@ public class Road_Network {
 			}
 		}
 		
-	}
+	}*/
 	
 	private static double distance(double lat1, double lon1, double lat2, double lon2, String unit) {
 		double theta = lon1 - lon2;
@@ -151,11 +152,4 @@ public class Road_Network {
 	private static double rad2deg(double rad) {
 		return (rad * 180 / Math.PI);
 	}
-	
-	public void printSegments(){
-		for(int i = 0; i < S.size(); i++){
-			System.out.println(S.get(i).id);
-		}
-		return;
-	}	
 }

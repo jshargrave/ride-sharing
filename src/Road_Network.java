@@ -6,7 +6,6 @@ public class Road_Network {
 	String SegmentFile = "files/Segment.txt";
 	int MAX_DIS =  50; //ft away from node to be matched to it
 	
-	String insertTable = "";
 	DBMS database = new DBMS(); //used to read in road network to database
 	
 	public void ReadInEdges(){
@@ -77,7 +76,7 @@ public class Road_Network {
 		return;
 	}
 	
-	String MNTG_Edge(String EdgeLine){
+	private String MNTG_Edge(String EdgeLine){
 		int start = 0;
     	int end = EdgeLine.indexOf(",", start);
     	String E_id = EdgeLine.substring(start, end);
@@ -96,7 +95,7 @@ public class Road_Network {
     	       E_node2+"); ";
 	}
 	
-	String MNTG_Node(String NodeLine){
+	private String MNTG_Node(String NodeLine){
 		int start = 0;
     	int end = NodeLine.indexOf(",", start);
     	String N_id = NodeLine.substring(start, end);
@@ -114,32 +113,4 @@ public class Road_Network {
     	       lat+", "+
     	       lon+"); ";
 	}
-	
-	/*
-	private static double distance(double lat1, double lon1, double lat2, double lon2, String unit) {
-		double theta = lon1 - lon2;
-		double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
-		dist = Math.acos(dist);
-		dist = rad2deg(dist);
-		dist = dist * 60 * 1.1515;
-		if (unit == "K") {
-			dist = dist * 1.609344;
-		} else if (unit == "N") {
-			dist = dist * 0.8684;
-		}
-		else if(unit == "F"){
-			dist = dist * 5280;
-		}
-
-		return (dist);
-	}
-
-	private static double deg2rad(double deg) {
-		return (deg * Math.PI / 180.0);
-	}
-
-	private static double rad2deg(double rad) {
-		return (rad * 180 / Math.PI);
-	}
-	*/
 }

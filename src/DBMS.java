@@ -67,54 +67,59 @@ public class DBMS {
 	}
 	
 	public void getSegment(String EdgeID){
-		 Connection conn = null;
-		   Statement stmt = null;
-		   try{
-		      //STEP 2: Register JDBC driver
-		      Class.forName("com.mysql.jdbc.Driver");
+		Connection conn = null;
+		Statement stmt = null;
+		try{
+			//STEP 2: Register JDBC driver
+		    Class.forName("com.mysql.jdbc.Driver");
 
-		      //STEP 3: Open a connection
-		      //System.out.println("Connecting to a selected database...");
-		      conn = DriverManager.getConnection(DB_URL, USER, PASS);
-		      //System.out.println("Connected database successfully...");
+		    //STEP 3: Open a connection
+		    //System.out.println("Connecting to a selected database...");
+		    conn = DriverManager.getConnection(DB_URL, USER, PASS);
+		    //System.out.println("Connected database successfully...");
 		      
-		      //STEP 4: Execute a query
-		      //System.out.println("Creating statement...");
-		      stmt = conn.createStatement();
+		    //STEP 4: Execute a query
+		    //System.out.println("Creating statement...");
+		    stmt = conn.createStatement();
 
-		      String sql = "SELECT id, node1, node2 FROM "+segTable+" WHERE id="+EdgeID;
-		      ResultSet rs = stmt.executeQuery(sql);
-		      //STEP 5: Extract data from result set
-		      while(rs.next()){
-		         //Retrieve by column name
-		         Double id  = rs.getDouble("id");
-		         Double node1 = rs.getDouble("node1");
-		         Double node2 = rs.getDouble("node2");
+		    String sql = "SELECT id, node1, node2 FROM "+segTable+" WHERE id="+EdgeID;
+		    ResultSet rs = stmt.executeQuery(sql);
+		    //STEP 5: Extract data from result set
+		    while(rs.next()){
+		    //Retrieve by column name
+		    Double id  = rs.getDouble("id");
+		    Double node1 = rs.getDouble("node1");
+		    Double node2 = rs.getDouble("node2");
 		         
-		         System.out.println(id+", \t"+node1+", \t"+node2);
-		      }
-		      rs.close();
-		   }catch(SQLException se){
-		      //Handle errors for JDBC
-		      se.printStackTrace();
-		   }catch(Exception e){
-		      //Handle errors for Class.forName
-		      e.printStackTrace();
-		   }finally{
-		      //finally block used to close resources
-		      try{
-		         if(stmt!=null)
+		    System.out.println(id+", \t"+node1+", \t"+node2);
+		    }
+		    rs.close();
+		}
+		catch(SQLException se){
+			//Handle errors for JDBC
+		    se.printStackTrace();
+		}
+		catch(Exception e){
+			//Handle errors for Class.forName
+		    e.printStackTrace();
+		}
+		finally{
+		    //finally block used to close resources
+		    try{
+		    	if(stmt!=null)
 		            conn.close();
-		      }catch(SQLException se){
-		      }// do nothing
-		      try{
-		         if(conn!=null)
+		    }
+		    catch(SQLException se){
+		    }// do nothing
+		    try{
+		    	if(conn!=null)
 		            conn.close();
-		      }catch(SQLException se){
-		         se.printStackTrace();
-		      }//end finally try
-		   }//end try
-		   return;
+		    }
+		    catch(SQLException se){
+		    	se.printStackTrace();
+		    }//end finally try
+		}//end try
+		return;
 	}
 	
 	public void buildTables(){
@@ -142,5 +147,11 @@ public class DBMS {
 		buildTables();
 		System.out.println("\tFinished building tables");
 		return;
+	}
+	
+	public String fileToString(String fileName){
+		
+		
+		return "";
 	}
 }

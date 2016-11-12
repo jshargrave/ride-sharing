@@ -1,3 +1,7 @@
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.DriverManager;
@@ -13,6 +17,8 @@ public class DBMS {
 	String segTable = "segment";
 	String nodeTable = "node";
 	String incTable = "incident";
+	
+	String tableFile = "files/Tables.sql";
 	
 	// JDBC driver name and database URL
 	String DB_URL = "jdbc:mysql://localhost:3306/"+databaseName+"?allowMultiQueries=true";
@@ -122,36 +128,52 @@ public class DBMS {
 		return;
 	}
 	
-	public void buildTables(){
-		String sql = "CREATE TABLE " + segTable + " "+
-				"(id BIGINT PRIMARY KEY, " +
-				"node1 varchar(25), " +
-				"node2 varchar(25)); " +
-               
-				"CREATE TABLE " + nodeTable + " "+
-                "(id BIGINT PRIMARY KEY, " +
-                "lat DOUBLE, " + 
-                "lon DOUBLE); ";
+	private void buildTables(){
+		String sql = fileToString(tableFile);
 		query(sql);
 		return;
 	}
 	public void clear(){
 		System.out.printf("Clearing database...");
+		long start_time = System.currentTimeMillis();
 		String sql = "DROP DATABASE "+databaseName+"; " + 
 				     "CREATE DATABASE "+databaseName+";";
 		
 		query(sql);
-		System.out.println("\tFinished clearing database");
+		long total_time = System.currentTimeMillis() - start_time;
+		System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 		
 		System.out.printf("Building tables...");
+		start_time = System.currentTimeMillis();
 		buildTables();
-		System.out.println("\tFinished building tables");
+		total_time = System.currentTimeMillis() - start_time;
+		System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 		return;
 	}
 	
-	public String fileToString(String fileName){
+	private String fileToString(String filename){
+		String line, sql = "";
 		
-		
-		return "";
+		try{
+			
+			// FileReader reads text files in the default encoding.
+            FileReader in = new FileReader(filename);
+
+            // Always wrap FileReader in BufferedReader.
+            BufferedReader reader = new BufferedReader(in);
+            
+            while((line = reader.readLine()) != null){
+            	sql += line;
+            }
+                    
+            reader.close();
+		}
+		catch(FileNotFoundException ex){
+			System.out.println("Unable to open file " + filename + " ...");
+		}
+		catch(IOException ex){
+			System.out.println("Error reading file " + filename + " ...");
+		}
+		return sql;
 	}
 }

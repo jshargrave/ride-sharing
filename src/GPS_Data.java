@@ -1,9 +1,8 @@
 import java.io.*;
 
 public class GPS_Data {
-	String GPSFile = "files/SanFransisco.txt"; //file to read in
+	static String GPSFile = "files/SanFransisco.txt"; //file to read in
 	
-	String insertTable = "";
 	DBMS database = new DBMS(); //used to read in road network to database
 
 	public GPS_Data(){

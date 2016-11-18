@@ -10,18 +10,18 @@ import java.sql.SQLException;
 
 public class DBMS {
 	//  Database credentials
-	String USER = "root";
-	String PASS = "";
+	static String USER = "root";
+	static String PASS = "";
 	
-	String databaseName = "RIDESHARING";
-	String segTable = "segment";
-	String nodeTable = "node";
-	String incTable = "incident";
+	static String databaseName = "RIDESHARING";
+	static String edgeTable = "tmp_edges";
+	static String nodeTable = "tmp_nodes";
+	static String incTable = "tmp_incidents";
 	
-	String tableFile = "files/Tables.sql";
+	static String tableFile = "files/Tables.sql";
 	
 	// JDBC driver name and database URL
-	String DB_URL = "jdbc:mysql://localhost:3306/"+databaseName+"?allowMultiQueries=true";
+	static String DB_URL = "jdbc:mysql://localhost:3306/"+databaseName+"?allowMultiQueries=true";
 	
 	public void query(String sql) {
 	   Connection conn = null;
@@ -72,9 +72,10 @@ public class DBMS {
 	   return;
 	}
 	
-	public void getSegment(String EdgeID){
+	public ResultSet exicuteQuery(String sql){
 		Connection conn = null;
 		Statement stmt = null;
+		ResultSet rs = null;
 		try{
 			//STEP 2: Register JDBC driver
 		    Class.forName("com.mysql.jdbc.Driver");
@@ -88,17 +89,7 @@ public class DBMS {
 		    //System.out.println("Creating statement...");
 		    stmt = conn.createStatement();
 
-		    String sql = "SELECT id, node1, node2 FROM "+segTable+" WHERE id="+EdgeID;
-		    ResultSet rs = stmt.executeQuery(sql);
-		    //STEP 5: Extract data from result set
-		    while(rs.next()){
-		    //Retrieve by column name
-		    Double id  = rs.getDouble("id");
-		    Double node1 = rs.getDouble("node1");
-		    Double node2 = rs.getDouble("node2");
-		         
-		    System.out.println(id+", \t"+node1+", \t"+node2);
-		    }
+		    rs = stmt.executeQuery(sql);
 		    rs.close();
 		}
 		catch(SQLException se){
@@ -125,7 +116,7 @@ public class DBMS {
 		    	se.printStackTrace();
 		    }//end finally try
 		}//end try
-		return;
+		return rs;
 	}
 	
 	private void buildTables(){
@@ -133,7 +124,7 @@ public class DBMS {
 		query(sql);
 		return;
 	}
-	public void clear(){
+	public void rebuildDatabase(){
 		System.out.printf("Clearing database...");
 		long start_time = System.currentTimeMillis();
 		String sql = "DROP DATABASE "+databaseName+"; " + 
@@ -175,5 +166,17 @@ public class DBMS {
 			System.out.println("Error reading file " + filename + " ...");
 		}
 		return sql;
+	}
+	
+	public String getEdgeTable(){
+		return edgeTable;
+	}
+	
+	public String getNodeTable(){
+		return nodeTable;
+	}
+	
+	public String getIncTable(){
+		return incTable;
 	}
 }

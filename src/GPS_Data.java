@@ -24,7 +24,7 @@ public class GPS_Data {
             System.out.print("Reading in GPS data... ");
             long start_time = System.currentTimeMillis();
             while((line = bufferedReader.readLine()) != null) {
-                database.query(SanFransiscoGPS(line)); //using the SanFransisco method
+                database.updateQuery(SanFransiscoGPS(line)); //using the SanFransisco method
             }
             long total_time = System.currentTimeMillis() - start_time;
             System.out.println("Completed: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
@@ -96,31 +96,7 @@ public class GPS_Data {
 	}
 	
 	/*
-	private static double distance(double lat1, double lon1, double lat2, double lon2, String unit) {
-		double theta = lon1 - lon2;
-		double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
-		dist = Math.acos(dist);
-		dist = rad2deg(dist);
-		dist = dist * 60 * 1.1515;
-		if (unit == "K") {
-			dist = dist * 1.609344;
-		} else if (unit == "N") {
-			dist = dist * 0.8684;
-		}
-		else if(unit == "F"){
-			dist = dist * 5280;
-		}
-
-		return (dist);
-	}
-
-	private static double deg2rad(double deg) {
-		return (deg * Math.PI / 180.0);
-	}
-
-	private static double rad2deg(double rad) {
-		return (rad * 180 / Math.PI);
-	}
+	
 	*/
 }
 

@@ -1,18 +1,15 @@
 import java.io.*;
-
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.*;
 
 public class Road_Network {	
 	static String NodeFile = "files/Nodes.txt";
 	static String EdgeFile = "files/Edges.txt";
 	
+	int partitionSize = 1; //measured in kilometers
+	
 	DBMS database = new DBMS(); //used to read in road network to database
 	
-	public void ReadInEdges(){
-		String EdgeLine;
-		
+	public void ReadInEdges(){		
 		try{
 			
 			// FileReader reads text files in the default encoding.
@@ -24,12 +21,28 @@ public class Road_Network {
             System.out.print("Reading in segments... ");
             
             long start_time = System.currentTimeMillis();
-            String sql = "TRUNCATE TABLE "+database.getEdgeTable()+"; ";
-            while((EdgeLine = EdgeReader.readLine()) != null){
+            
+            
+            String sql = "TRUNCATE TABLE "+database.getEdgeTable()+"; "+
+            		     "INSERT INTO "+database.getEdgeTable()+" (seg_id, node1, node2) "+
+            		     "VALUES ";
+            
+            String next;
+            String EdgeLine = EdgeReader.readLine();
+            while(EdgeLine != null){
             	sql += MNTG_Edge(EdgeLine);
+            	next = EdgeReader.readLine();
+            	EdgeLine = next;
+            	if(null == next){
+            		sql += ";";
+            	}
+            	else{
+            		sql += ", ";
+            	}
             }
+            
 
-            database.query(sql);
+            database.updateQuery(sql);
             long total_time = System.currentTimeMillis() - start_time;
             System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
                     
@@ -63,7 +76,7 @@ public class Road_Network {
             	sql += MNTG_Node(NodeLine);
             }
             
-            database.query(sql);
+            database.updateQuery(sql);
             long total_time = System.currentTimeMillis() - start_time;
             System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
                     
@@ -91,10 +104,7 @@ public class Road_Network {
     	end = EdgeLine.indexOf(",", start);
     	String E_node2 = EdgeLine.substring(start, end);
 		
-    	return "INSERT INTO "+database.getEdgeTable()+" VALUES ("+
-    	       E_id+", "+
-    	       E_node1+", "+
-    	       E_node2+"); ";
+    	return "("+E_id+","+E_node1+","+E_node2+")";
 	}
 	
 	private String MNTG_Node(String NodeLine){
@@ -117,18 +127,48 @@ public class Road_Network {
 	}
 	
 	public void partitionRN(){
-		String sql = "SELECT node_id FROM "+database.getNodeTable();
-		ResultSet rs = database.exicuteQuery(sql);
-		int id;
+		String sql = "SELECT MAX(lat), MIN(lat), MAX(lon), MIN(lon) "+
+				     "FROM "+database.getNodeTable();
 		
-		try{
-			while(rs.next()){
-				id = rs.getInt("node_id");
-				System.out.println("here");
-			}
+		List<Map<String, Object>> results = database.exicuteQuery(sql);
+		
+		double MaxLat = Double.parseDouble(results.get(0).get("MAX(lat)").toString());
+		double MinLat = Double.parseDouble(results.get(0).get("MIN(lat)").toString());
+		double MaxLon = Double.parseDouble(results.get(0).get("MAX(lon)").toString());
+		double MinLon = Double.parseDouble(results.get(0).get("MIN(lon)").toString());
+		
+		double numberColumns = distance(MaxLat, MaxLon, MinLat, MaxLon, "K");
+		double numberRows = distance(MaxLat, MaxLon, MaxLat, MinLon, "K");
+		
+		System.out.println(numberRows+", "+numberColumns);
+		//System.out.printf("%f, %f \n %f, %f", MaxLat, MinLat, MaxLon, MinLon);
+		
+		return;
+	}
+	
+	private static double distance(double lat1, double lon1, double lat2, double lon2, String unit) {
+		double theta = lon1 - lon2;
+		double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
+		dist = Math.acos(dist);
+		dist = rad2deg(dist);
+		dist = dist * 60 * 1.1515;
+		if (unit == "K") {
+			dist = dist * 1.609344;
+		} else if (unit == "N") {
+			dist = dist * 0.8684;
 		}
-		catch (SQLException se){
-			
+		else if(unit == "F"){
+			dist = dist * 5280;
 		}
+
+		return (dist);
+	}
+
+	private static double deg2rad(double deg) {
+		return (deg * Math.PI / 180.0);
+	}
+
+	private static double rad2deg(double rad) {
+		return (rad * 180 / Math.PI);
 	}
 }

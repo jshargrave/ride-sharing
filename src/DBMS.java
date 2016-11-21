@@ -1,12 +1,7 @@
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.Statement;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.io.*;
+import java.sql.*;
+import java.util.*;
+
 
 public class DBMS {
 	//  Database credentials
@@ -23,26 +18,15 @@ public class DBMS {
 	// JDBC driver name and database URL
 	static String DB_URL = "jdbc:mysql://localhost:3306/"+databaseName+"?allowMultiQueries=true";
 	
-	public void query(String sql) {
+	public void updateQuery(String sql) {
 	   Connection conn = null;
 	   Statement stmt = null;
 	   try{
-	      //STEP 2: Register JDBC driver
 	      Class.forName("com.mysql.jdbc.Driver");
-
-	      //STEP 3: Open a connection
-	      //System.out.println("Connecting to a selected database...");
 	      conn = DriverManager.getConnection(DB_URL, USER, PASS);
-	      //System.out.println("Connected database successfully...");
-		      
-	      //STEP 4: Execute a query
-	      //System.out.println("running query...");
 	      stmt = conn.createStatement();
 		      
 	      stmt.executeUpdate(sql);
-	
-	      //System.out.println("finished query...");
-
 	   }
 	   catch(SQLException se){
 	      //Handle errors for JDBC
@@ -72,24 +56,32 @@ public class DBMS {
 	   return;
 	}
 	
-	public ResultSet exicuteQuery(String sql){
+	/* Returns a List<Map<String, Object>>, list items can be accessed by List.get(int index), Map items can be accessed by Map.get("column name")*/
+	public List<Map<String, Object>> exicuteQuery(String sql){
 		Connection conn = null;
 		Statement stmt = null;
-		ResultSet rs = null;
-		try{
-			//STEP 2: Register JDBC driver
-		    Class.forName("com.mysql.jdbc.Driver");
+		List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
 
-		    //STEP 3: Open a connection
-		    //System.out.println("Connecting to a selected database...");
+		try{
+		    Class.forName("com.mysql.jdbc.Driver");
 		    conn = DriverManager.getConnection(DB_URL, USER, PASS);
-		    //System.out.println("Connected database successfully...");
-		      
-		    //STEP 4: Execute a query
-		    //System.out.println("Creating statement...");
 		    stmt = conn.createStatement();
 
-		    rs = stmt.executeQuery(sql);
+		    ResultSet rs = stmt.executeQuery(sql);
+		    ResultSetMetaData metaData = rs.getMetaData();
+		    int columnCount = metaData.getColumnCount();
+		    
+		    
+		    Map<String, Object> row = null;
+		    while(rs.next()){
+		    	row = new HashMap<String, Object>();
+		    	for(int i = 1; i <= columnCount; i++){
+		    		row.put(metaData.getColumnName(i), rs.getObject(i));
+		    	}
+		    	resultList.add(row);
+		    }
+		    
+		
 		    rs.close();
 		}
 		catch(SQLException se){
@@ -116,12 +108,12 @@ public class DBMS {
 		    	se.printStackTrace();
 		    }//end finally try
 		}//end try
-		return rs;
+		return resultList;
 	}
 	
 	private void buildTables(){
 		String sql = fileToString(tableFile);
-		query(sql);
+		updateQuery(sql);
 		return;
 	}
 	public void rebuildDatabase(){
@@ -130,7 +122,7 @@ public class DBMS {
 		String sql = "DROP DATABASE "+databaseName+"; " + 
 				     "CREATE DATABASE "+databaseName+";";
 		
-		query(sql);
+		updateQuery(sql);
 		long total_time = System.currentTimeMillis() - start_time;
 		System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 		

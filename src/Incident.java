@@ -16,7 +16,7 @@ public class Incident {
 		String incidents = getIncidents(); //returns a string containing the incidents from the api
 		String sql = "TRUNCATE TABLE "+database.getIncTable()+"; "; 
 		sql += tomtomToSQL(incidents); //converts the string to sql code
-		database.query(sql); //queries the sql code to the database
+		database.updateQuery(sql); //queries the sql code to the database
 		
 		long total_time = System.currentTimeMillis() - start_time;
 		System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");

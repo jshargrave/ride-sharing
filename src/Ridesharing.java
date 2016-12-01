@@ -1,15 +1,15 @@
 public class Ridesharing {
 	public static void main(String args[]){
 		//-----------------------reset database------------------------
-		//DBMS database = new DBMS();
-		//database.rebuildDatabase();
+		DBMS database = new DBMS();
+		database.rebuildDatabase();
 		
 		//-----------------------read in rode network------------------
 		Road_Network R = new Road_Network();
-		//R.ReadInEdges();
-		//R.ReadInNodes();
-
+		R.ReadInEdges();
+		R.ReadInNodes();
 		R.partitionRN();
+		R.populatePartitionRN();
 		//-----------------------read in incidents---------------------
 		//Incident I = new Incident();
 		//I.readInIncidents();

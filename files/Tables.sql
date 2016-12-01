@@ -7,6 +7,13 @@ CREATE TABLE tmp_nodes (
 	node_id BIGINT PRIMARY KEY,
 	lat DOUBLE,
 	lon DOUBLE);
+	
+CREATE TABLE segments (
+	seg_id BIGINT PRIMARY KEY,
+	lat1 DOUBLE,
+	lon1 DOUBLE,
+	lat2 DOUBLE,
+	lon2 DOUBLE);
 	    
 CREATE TABLE tmp_incidents(
 	inc_id VARCHAR(50) PRIMARY KEY,
@@ -19,7 +26,7 @@ CREATE TABLE tmp_incidents(
 	delay_time INTEGER);
 	
 CREATE TABLE rn_index(
-	table_id INTEGER PRIMARY KEY,
+	table_id VARCHAR(50) PRIMARY KEY,
 	max_lat DOUBLE,
 	max_lon DOUBLE,
 	min_lat DOUBLE,

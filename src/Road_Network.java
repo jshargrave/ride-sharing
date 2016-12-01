@@ -9,6 +9,12 @@ public class Road_Network {
 	
 	DBMS database = new DBMS(); //used to read in road network to database
 	
+	
+	Road_Network(){
+		//ReadInEdges();
+		//ReadInNodes();
+		//mergeNodeEdge();
+	}
 	public void ReadInEdges(){		
 		try{
 			
@@ -124,7 +130,7 @@ public class Road_Network {
     	       N_id+", "+
     	       lat+", "+
     	       lon+"); ";
-	}
+	}	
 	
 	public void partitionRN(){
 		String sql = "SELECT MAX(lat), MIN(lat), MAX(lon), MIN(lon) "+
@@ -137,13 +143,120 @@ public class Road_Network {
 		double MaxLon = Double.parseDouble(results.get(0).get("MAX(lon)").toString());
 		double MinLon = Double.parseDouble(results.get(0).get("MIN(lon)").toString());
 		
-		double numberColumns = distance(MaxLat, MaxLon, MinLat, MaxLon, "K");
-		double numberRows = distance(MaxLat, MaxLon, MaxLat, MinLon, "K");
+		int numberColumns = (int)distance(MaxLat, MaxLon, MinLat, MaxLon, "K") + 1;
+		int numberRows = (int)distance(MaxLat, MaxLon, MaxLat, MinLon, "K") + 1;
 		
-		System.out.println(numberRows+", "+numberColumns);
-		//System.out.printf("%f, %f \n %f, %f", MaxLat, MinLat, MaxLon, MinLon);
+		double latInc = (MaxLat - MinLat)/numberColumns; //keeps track of how much to increment the lat for each partition
+		double lonInc = (MaxLon - MinLon)/numberRows; //keeps track of how much to increment the lon for each partition
+		
+		//-----------------------Begin Partition-------------------------------------
+		double currentLat = MaxLat;
+		double currentLon = MaxLon;
+		
+		String Row, Column;
+		String sqlpar, sqlrn = "TRUNCATE TABLE "+database.getRNIndexTable()+"; ";
+		
+		System.out.print("Partitioning road network... ");
+		long start_time = System.currentTimeMillis();
+		
+		for(int j = 1; j <= numberColumns; j++){
+			for(int k = 1; k <= numberRows; k++){
+				Row = Integer.toString(j);
+				Column = Integer.toString(k);
+				sqlrn += "INSERT INTO "+database.getRNIndexTable()+" VALUES("+
+					     "'"+Row+"x"+Column+"', "+
+						 currentLat+", "+
+						 currentLon+", "+
+						 (currentLat - latInc)+", "+
+						 (currentLon - lonInc)+"); ";
+					 
+				currentLat -= latInc;
+				
+				sqlpar = "CREATE TABLE "+Row+"x"+Column+" "+database.fileToString("files/PartitionRN.sql");
+				database.updateQuery(sqlpar);
+			}
+			currentLon -= lonInc;
+		}
+		database.updateQuery(sqlrn);
+		
+		long total_time = System.currentTimeMillis() - start_time;
+        System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+          
 		
 		return;
+	}
+	
+	public void populatePartitionRN(){
+		String sql = database.fileToString("files/MergeNE.sql");
+		List<Map<String, Object>> resultsNE = database.exicuteQuery(sql);
+		
+		sql = "SELECT * FROM "+database.getRNIndexTable();
+		List<Map<String, Object>> resultsIndexs = database.exicuteQuery(sql);
+		
+		double lat1, lon1, lat2, lon2, maxLat, maxLon, minLat, minLon;
+		String tableInsert, segid, node1, node2;
+		sql = "";
+		
+		System.out.print("Populating partitions... ");
+		long start_time = System.currentTimeMillis();
+		
+		for(int i = 0; i < resultsNE.size(); i++){
+			segid = resultsNE.get(i).get("seg_id").toString();
+			node1 = resultsNE.get(i).get("node1").toString();
+			node2 = resultsNE.get(i).get("node2").toString();
+			
+			lat1 = Double.parseDouble(resultsNE.get(i).get("lat1").toString());
+			lon1 = Double.parseDouble(resultsNE.get(i).get("lon1").toString());
+			lat2 = Double.parseDouble(resultsNE.get(i).get("lat2").toString());
+			lon2 = Double.parseDouble(resultsNE.get(i).get("lon2").toString());
+			
+			for(int j = 0; j < resultsIndexs.size(); j++){
+				maxLat = Double.parseDouble(resultsIndexs.get(j).get("max_lat").toString());
+				maxLon = Double.parseDouble(resultsIndexs.get(j).get("max_lon").toString());
+				minLat = Double.parseDouble(resultsIndexs.get(j).get("min_lat").toString());
+				minLon = Double.parseDouble(resultsIndexs.get(j).get("min_lon").toString());
+				
+				if(NodeInIndex(maxLat, maxLon, minLat, minLon, lat1, lon1)){
+					tableInsert = resultsIndexs.get(j).get("table_id").toString();
+					
+					sql += "INSERT INTO "+tableInsert+" VALUES ("+
+				    	       segid+", "+
+				    	       node1+", "+
+				    	       node2+", "+
+				    	       lat1+", "+
+				    	       lon1+", "+
+				    	       lat2+", "+
+				    	       lon2+"); ";
+				}
+				else if(NodeInIndex(maxLat, maxLon, minLat, minLon, lat2, lon2)){
+					tableInsert = resultsIndexs.get(j).get("table_id").toString();
+					
+					sql += "INSERT INTO "+tableInsert+" VALUES ("+
+				    	       segid+", "+
+				    	       node1+", "+
+				    	       node2+", "+
+				    	       lat1+", "+
+				    	       lon1+", "+
+				    	       lat2+", "+
+				    	       lon2+"); ";
+				}
+			}
+		}
+		
+		database.updateQuery(sql);
+		
+		long total_time = System.currentTimeMillis() - start_time;
+        System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+	}
+	
+	private boolean NodeInIndex(double maxLat, double maxLon, double minLat, double minLon, double lat, double lon){
+		//System.out.printf("%f, %f, %f, %f, %f, %f\n", maxLat, maxLon, minLat, minLon, lat, lon);
+		if(lat <= maxLat && lat >= minLat && lon <= maxLon && lon >= minLon){
+			return true;
+		}
+		else{
+			return false;
+		}
 	}
 	
 	private static double distance(double lat1, double lon1, double lat2, double lon2, String unit) {
@@ -160,8 +273,11 @@ public class Road_Network {
 		else if(unit == "F"){
 			dist = dist * 5280;
 		}
+		else if(unit == "meters"){
+			dist = dist * 1609.34;
+		}
 
-		return (dist);
+		return dist;
 	}
 
 	private static double deg2rad(double deg) {

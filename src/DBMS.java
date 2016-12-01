@@ -11,7 +11,9 @@ public class DBMS {
 	static String databaseName = "RIDESHARING";
 	static String edgeTable = "tmp_edges";
 	static String nodeTable = "tmp_nodes";
+	static String segTable = "segments";
 	static String incTable = "tmp_incidents";
+	static String rnIndexTable = "rn_index";
 	
 	static String tableFile = "files/Tables.sql";
 	
@@ -134,7 +136,7 @@ public class DBMS {
 		return;
 	}
 	
-	private String fileToString(String filename){
+	public String fileToString(String filename){
 		String line, sql = "";
 		
 		try{
@@ -170,5 +172,13 @@ public class DBMS {
 	
 	public String getIncTable(){
 		return incTable;
+	}
+	
+	public String getRNIndexTable(){
+		return rnIndexTable;
+	}
+	
+	public String getSegTable(){
+		return segTable;
 	}
 }

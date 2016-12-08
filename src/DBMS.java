@@ -11,7 +11,7 @@ public class DBMS {
 	static String databaseName = "RIDESHARING";
 	static String edgeTable = "tmp_edges";
 	static String nodeTable = "tmp_nodes";
-	static String segTable = "segments";
+	static String GPSTable = "tmp_gps";
 	static String incTable = "tmp_incidents";
 	static String rnIndexTable = "rn_index";
 	
@@ -162,6 +162,35 @@ public class DBMS {
 		return sql;
 	}
 	
+	public double distance(double lat1, double lon1, double lat2, double lon2, String unit) {
+		double theta = lon1 - lon2;
+		double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
+		dist = Math.acos(dist);
+		dist = rad2deg(dist);
+		dist = dist * 60 * 1.1515;
+		if (unit == "K") {
+			dist = dist * 1.609344;
+		} else if (unit == "N") {
+			dist = dist * 0.8684;
+		}
+		else if(unit == "F"){
+			dist = dist * 5280;
+		}
+		else if(unit == "meters"){
+			dist = dist * 1609.34;
+		}
+
+		return dist;
+	}
+
+	private static double deg2rad(double deg) {
+		return (deg * Math.PI / 180.0);
+	}
+
+	private static double rad2deg(double rad) {
+		return (rad * 180 / Math.PI);
+	}
+	
 	public String getEdgeTable(){
 		return edgeTable;
 	}
@@ -178,7 +207,7 @@ public class DBMS {
 		return rnIndexTable;
 	}
 	
-	public String getSegTable(){
-		return segTable;
+	public String getGPSTable(){
+		return GPSTable;
 	}
 }

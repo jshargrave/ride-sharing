@@ -16,6 +16,7 @@ public class Road_Network {
 		//mergeNodeEdge();
 	}
 	public void ReadInEdges(){		
+		String line = null;
 		try{
 			
 			// FileReader reads text files in the default encoding.
@@ -33,20 +34,11 @@ public class Road_Network {
             		     "INSERT INTO "+database.getEdgeTable()+" (seg_id, node1, node2) "+
             		     "VALUES ";
             
-            String next;
-            String EdgeLine = EdgeReader.readLine();
-            while(EdgeLine != null){
-            	sql += MNTG_Edge(EdgeLine);
-            	next = EdgeReader.readLine();
-            	EdgeLine = next;
-            	if(null == next){
-            		sql += ";";
-            	}
-            	else{
-            		sql += ", ";
-            	}
-            }
             
+            while((line = EdgeReader.readLine()) != null) {
+            	sql += MNTG_Edge(line);
+            }
+            sql = sql.substring(0, sql.length() - 1) + ";";
 
             database.updateQuery(sql);
             long total_time = System.currentTimeMillis() - start_time;
@@ -77,10 +69,15 @@ public class Road_Network {
             System.out.print("Reading in nodes... ");
             
             long start_time = System.currentTimeMillis();
-            String sql = "TRUNCATE TABLE "+database.getNodeTable()+"; ";
+            
+            String sql = "TRUNCATE TABLE "+database.getNodeTable()+"; "+
+       		     "INSERT INTO "+database.getNodeTable()+" (node_id, lat, lon) "+
+       		     "VALUES ";
+            
             while((NodeLine = NodeReader.readLine()) != null){
             	sql += MNTG_Node(NodeLine);
             }
+            sql = sql.substring(0, sql.length() - 1) + ";";
             
             database.updateQuery(sql);
             long total_time = System.currentTimeMillis() - start_time;
@@ -110,7 +107,7 @@ public class Road_Network {
     	end = EdgeLine.indexOf(",", start);
     	String E_node2 = EdgeLine.substring(start, end);
 		
-    	return "("+E_id+","+E_node1+","+E_node2+")";
+    	return "("+E_id+","+E_node1+","+E_node2+"),";
 	}
 	
 	private String MNTG_Node(String NodeLine){
@@ -126,10 +123,7 @@ public class Road_Network {
     	end = NodeLine.length();
     	String lon = NodeLine.substring(start, end);
 		
-    	return "INSERT INTO "+database.getNodeTable()+" VALUES ("+
-    	       N_id+", "+
-    	       lat+", "+
-    	       lon+"); ";
+    	return "("+N_id+","+lat+","+lon+"),";
 	}	
 	
 	public void partitionRN(){
@@ -143,11 +137,11 @@ public class Road_Network {
 		double MaxLon = Double.parseDouble(results.get(0).get("MAX(lon)").toString());
 		double MinLon = Double.parseDouble(results.get(0).get("MIN(lon)").toString());
 		
-		int numberColumns = (int)distance(MaxLat, MaxLon, MinLat, MaxLon, "K") + 1;
-		int numberRows = (int)distance(MaxLat, MaxLon, MaxLat, MinLon, "K") + 1;
+		int numberRows = (int)database.distance(MaxLat, MaxLon, MinLat, MaxLon, "K") + 1;
+		int numberColumns = (int)database.distance(MaxLat, MaxLon, MaxLat, MinLon, "K") + 1;
 		
-		double latInc = (MaxLat - MinLat)/numberColumns; //keeps track of how much to increment the lat for each partition
-		double lonInc = (MaxLon - MinLon)/numberRows; //keeps track of how much to increment the lon for each partition
+		double latInc = (MaxLat - MinLat)/numberRows; //keeps track of how much to increment the lat for each partition
+		double lonInc = (MaxLon - MinLon)/numberColumns; //keeps track of how much to increment the lon for each partition
 		
 		//-----------------------Begin Partition-------------------------------------
 		double currentLat = MaxLat;
@@ -170,12 +164,13 @@ public class Road_Network {
 						 (currentLat - latInc)+", "+
 						 (currentLon - lonInc)+"); ";
 					 
-				currentLat -= latInc;
+				currentLon -= lonInc;
 				
 				sqlpar = "CREATE TABLE "+Row+"x"+Column+" "+database.fileToString("files/PartitionRN.sql");
 				database.updateQuery(sqlpar);
 			}
-			currentLon -= lonInc;
+			currentLat -= latInc; //decrease on row
+			currentLon = MaxLon; //set to first column
 		}
 		database.updateQuery(sqlrn);
 		
@@ -200,6 +195,8 @@ public class Road_Network {
 		System.out.print("Populating partitions... ");
 		long start_time = System.currentTimeMillis();
 		
+		int numMatches = 0;
+		boolean foundMatch = false;
 		for(int i = 0; i < resultsNE.size(); i++){
 			segid = resultsNE.get(i).get("seg_id").toString();
 			node1 = resultsNE.get(i).get("node1").toString();
@@ -216,7 +213,7 @@ public class Road_Network {
 				minLat = Double.parseDouble(resultsIndexs.get(j).get("min_lat").toString());
 				minLon = Double.parseDouble(resultsIndexs.get(j).get("min_lon").toString());
 				
-				if(NodeInIndex(maxLat, maxLon, minLat, minLon, lat1, lon1)){
+				if(NodeInIndex(maxLat, maxLon, minLat, minLon, lat1, lon1) || NodeInIndex(maxLat, maxLon, minLat, minLon, lat2, lon2)){
 					tableInsert = resultsIndexs.get(j).get("table_id").toString();
 					
 					sql += "INSERT INTO "+tableInsert+" VALUES ("+
@@ -227,18 +224,12 @@ public class Road_Network {
 				    	       lon1+", "+
 				    	       lat2+", "+
 				    	       lon2+"); ";
+					foundMatch = true;
+					break;
 				}
-				else if(NodeInIndex(maxLat, maxLon, minLat, minLon, lat2, lon2)){
-					tableInsert = resultsIndexs.get(j).get("table_id").toString();
-					
-					sql += "INSERT INTO "+tableInsert+" VALUES ("+
-				    	       segid+", "+
-				    	       node1+", "+
-				    	       node2+", "+
-				    	       lat1+", "+
-				    	       lon1+", "+
-				    	       lat2+", "+
-				    	       lon2+"); ";
+				if(foundMatch){
+					numMatches++;
+					foundMatch = false;
 				}
 			}
 		}
@@ -246,45 +237,15 @@ public class Road_Network {
 		database.updateQuery(sql);
 		
 		long total_time = System.currentTimeMillis() - start_time;
-        System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+        System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins; found "+ numMatches + " matches.");
 	}
 	
-	private boolean NodeInIndex(double maxLat, double maxLon, double minLat, double minLon, double lat, double lon){
-		//System.out.printf("%f, %f, %f, %f, %f, %f\n", maxLat, maxLon, minLat, minLon, lat, lon);
-		if(lat <= maxLat && lat >= minLat && lon <= maxLon && lon >= minLon){
+	public boolean NodeInIndex(double maxLat, double maxLon, double minLat, double minLon, double lat, double lon){
+		if((lat <= maxLat && lat >= minLat) && (lon <= maxLon && lon >= minLon)){
 			return true;
 		}
 		else{
 			return false;
 		}
-	}
-	
-	private static double distance(double lat1, double lon1, double lat2, double lon2, String unit) {
-		double theta = lon1 - lon2;
-		double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
-		dist = Math.acos(dist);
-		dist = rad2deg(dist);
-		dist = dist * 60 * 1.1515;
-		if (unit == "K") {
-			dist = dist * 1.609344;
-		} else if (unit == "N") {
-			dist = dist * 0.8684;
-		}
-		else if(unit == "F"){
-			dist = dist * 5280;
-		}
-		else if(unit == "meters"){
-			dist = dist * 1609.34;
-		}
-
-		return dist;
-	}
-
-	private static double deg2rad(double deg) {
-		return (deg * Math.PI / 180.0);
-	}
-
-	private static double rad2deg(double rad) {
-		return (rad * 180 / Math.PI);
 	}
 }

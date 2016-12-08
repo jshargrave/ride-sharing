@@ -7,15 +7,16 @@ CREATE TABLE tmp_nodes (
 	node_id BIGINT PRIMARY KEY,
 	lat DOUBLE,
 	lon DOUBLE);
+
+CREATE TABLE tmp_gps (
+	gps_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+	car_id INT,
+	log_time TIME,
+	lat DOUBLE,
+	lon DOUBLE,
+	speed FLOAT DEFAULT '-1');
 	
-CREATE TABLE segments (
-	seg_id BIGINT PRIMARY KEY,
-	lat1 DOUBLE,
-	lon1 DOUBLE,
-	lat2 DOUBLE,
-	lon2 DOUBLE);
-	    
-CREATE TABLE tmp_incidents(
+CREATE TABLE tmp_incidents (
 	inc_id VARCHAR(50) PRIMARY KEY,
 	lat DOUBLE,
 	lon DOUBLE,
@@ -36,3 +37,4 @@ CREATE TABLE taxi_index (
 	taxi_id INTEGER PRIMARY KEY,
 	table_id INTEGER,
 	FOREIGN KEY (table_id) REFERENCES RN_index(table_id));
+	

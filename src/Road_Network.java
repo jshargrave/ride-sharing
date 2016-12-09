@@ -137,8 +137,8 @@ public class Road_Network {
 		double MaxLon = Double.parseDouble(results.get(0).get("MAX(lon)").toString());
 		double MinLon = Double.parseDouble(results.get(0).get("MIN(lon)").toString());
 		
-		int numberRows = (int)database.distance(MaxLat, MaxLon, MinLat, MaxLon, "K") + 1;
-		int numberColumns = (int)database.distance(MaxLat, MaxLon, MaxLat, MinLon, "K") + 1;
+		int numberRows = ((int)database.distance(MaxLat, MaxLon, MinLat, MaxLon, "K") + 1);
+		int numberColumns = ((int)database.distance(MaxLat, MaxLon, MaxLat, MinLon, "K") + 1);
 		
 		double latInc = Math.abs((MaxLat - MinLat)/numberRows); //keeps track of how much to increment the lat for each partition
 		double lonInc = Math.abs((MaxLon - MinLon)/numberColumns); //keeps track of how much to increment the lon for each partition
@@ -152,15 +152,19 @@ public class Road_Network {
 		System.out.print("Partitioning road network... ");
 		long start_time = System.currentTimeMillis();
 		
-		for(int j = 1; j <= numberColumns; j++){
-			for(int k = 1; k <= numberRows; k++){				
+		int j = 1, k = 1;
+		while(currentLon >= MinLon){
+			while(currentLat >= MinLat){
 				sql += "INSERT INTO "+database.getRNIndexTable()+" VALUES("+"'"+j+"x"+k+"', "+currentLat+", "+currentLon+", "+(currentLat - latInc)+", "+(currentLon - lonInc)+"); ";
 				sql += "CREATE TABLE "+j+"x"+k+" "+database.fileToString("files/PartitionRN.sql");
-					 
-				currentLon -= lonInc;
+				
+				currentLat -= latInc;
+				k++;
 			}
-			currentLat -= latInc; //decrease on row
-			currentLon = MaxLon; //set to first column
+			currentLon -= lonInc; //decrease on row
+			currentLat = MaxLat; //set to first column
+			k = 1;
+			j++;
 		}
 		database.updateQuery(sql);
 		
@@ -205,5 +209,19 @@ public class Road_Network {
 		
 		long total_time = System.currentTimeMillis() - start_time;
         System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+	}
+	
+	public int countPartitionEntries(){
+		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT * FROM "+database.getRNIndexTable());
+		List<Map<String, Object>> partition;
+		
+		int entries = 0;
+		String index;
+		for(int j = 0; j < resultsIndexs.size(); j++){
+				index = resultsIndexs.get(j).get("table_id").toString();
+				partition = database.exicuteQuery("SELECT * FROM "+index);
+				entries += partition.size();
+		}
+		return entries;
 	}
 }

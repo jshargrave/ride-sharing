@@ -97,7 +97,7 @@ public class GPS_Data {
 			if(newID){
 				lat1 = Double.parseDouble(results.get(i).get("lat").toString());
 				lon1 = Double.parseDouble(results.get(i).get("lon").toString());
-				log_time1 = convertToInt(results.get(i).get("log_time").toString());
+				log_time1 = convertTime(results.get(i).get("log_time").toString());
 				i++;
 			}
 			else{
@@ -109,7 +109,7 @@ public class GPS_Data {
 			gps_id = Integer.parseInt(results.get(i).get("gps_id").toString());
 			lat2 = Double.parseDouble(results.get(i).get("lat").toString());
 			lon2 = Double.parseDouble(results.get(i).get("lon").toString());
-			log_time2 = convertToInt(results.get(i).get("log_time").toString());
+			log_time2 = convertTime(results.get(i).get("log_time").toString());
 			
 			dist = database.distance(lat1, lon1, lat2, lon2, "K");
 			speed = dist/(log_time2 - log_time1) * 60 * 60;
@@ -127,7 +127,7 @@ public class GPS_Data {
         System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins; found ");
 	}
 	
-	private int convertToInt(String s){
+	private int convertTime(String s){
 		String[] timef=s.split(":");  
 
 		int hour=Integer.parseInt(timef[0]);  
@@ -135,6 +135,74 @@ public class GPS_Data {
 		int second=Integer.parseInt(timef[2]);  
 
 		return second + (60 * minute) + (3600 * hour);
+	}
+	
+	public void matchLogToSeg(){
+		System.out.print("Matching GPS logs to segments... ");
+		long start_time = System.currentTimeMillis();
+		
+		List<Map<String, Object>> GPSResults = database.exicuteQuery("SELECT * FROM "+database.getGPSTable());
+		List<Map<String, Object>> indexResults = database.exicuteQuery("SELECT * FROM "+database.getRNIndexTable());
+		List<Map<String, Object>> partitionResults;
+		
+		
+		
+		
+		String index;
+		String sql = "";
+		int gps_id;
+		double maxlat, maxlon, minlat, minlon, lat, lon, lat1, lon1, lat2, lon2, segID, totalDist, minDist;
+		
+		for(int j = 0; j < GPSResults.size(); j++){
+			
+			lat = Double.parseDouble(GPSResults.get(j).get("lat").toString());
+			lon = Double.parseDouble(GPSResults.get(j).get("lon").toString());
+		
+			for(int i = 0; i < indexResults.size(); i++){
+				
+				maxlat = Double.parseDouble(indexResults.get(i).get("max_lat").toString());
+				maxlon = Double.parseDouble(indexResults.get(i).get("max_lon").toString());
+				minlat = Double.parseDouble(indexResults.get(i).get("min_lat").toString());
+				minlon = Double.parseDouble(indexResults.get(i).get("min_lon").toString());
+				
+				if(database.coordsInBox(maxlat, maxlon, minlat, minlon, lat, lon)){
+					index = indexResults.get(i).get("table_id").toString();
+					gps_id = Integer.parseInt(GPSResults.get(j).get("gps_id").toString());
+					
+					
+					partitionResults = database.exicuteQuery("SELECT * FROM "+index);
+					
+					minDist = 1;
+					segID = -1;
+					for(int k = 0; k < partitionResults.size(); k++){
+						lat1 = Double.parseDouble(partitionResults.get(k).get("lat1").toString());
+						lon1 = Double.parseDouble(partitionResults.get(k).get("lon1").toString());
+						lat2 = Double.parseDouble(partitionResults.get(k).get("lat2").toString());
+						lon2 = Double.parseDouble(partitionResults.get(k).get("lon2").toString());
+						
+						totalDist = database.distance(lat1, lon1, lat, lon, "k") + database.distance(lat2, lon2, lat, lon, "k");
+						
+						
+						if(totalDist < minDist){
+							minDist = totalDist;
+							segID = Double.parseDouble(partitionResults.get(k).get("seg_id").toString());
+						}
+					}
+					
+					sql += "UPDATE "+database.getGPSTable()+" SET index_id='"+index+"', seg_id='"+segID+"' WHERE gps_id="+gps_id+"; ";
+					
+					break;
+					
+				}
+			}
+		}
+		database.updateQuery(sql);
+		
+		
+		
+		
+		long total_time = System.currentTimeMillis() - start_time;
+        System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 }
 

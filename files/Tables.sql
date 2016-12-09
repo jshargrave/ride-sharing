@@ -7,10 +7,21 @@ CREATE TABLE tmp_nodes (
 	node_id BIGINT PRIMARY KEY,
 	lat DOUBLE,
 	lon DOUBLE);
+	
+CREATE TABLE mergedNE (
+	seg_id BIGINT PRIMARY KEY,
+	node1 varchar(25),
+	node2 varchar(25),
+	lat1 DOUBLE,
+	lon1 DOUBLE,
+	lat2 DOUBLE,
+	lon2 DOUBLE);
 
 CREATE TABLE tmp_gps (
 	gps_id BIGINT AUTO_INCREMENT PRIMARY KEY,
 	car_id INT,
+	index_id VARCHAR(50) DEFAULT '0x0',
+	seg_id BIGINT DEFAULT '-1',
 	log_time TIME,
 	lat DOUBLE,
 	lon DOUBLE,

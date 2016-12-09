@@ -140,39 +140,29 @@ public class Road_Network {
 		int numberRows = (int)database.distance(MaxLat, MaxLon, MinLat, MaxLon, "K") + 1;
 		int numberColumns = (int)database.distance(MaxLat, MaxLon, MaxLat, MinLon, "K") + 1;
 		
-		double latInc = (MaxLat - MinLat)/numberRows; //keeps track of how much to increment the lat for each partition
-		double lonInc = (MaxLon - MinLon)/numberColumns; //keeps track of how much to increment the lon for each partition
+		double latInc = Math.abs((MaxLat - MinLat)/numberRows); //keeps track of how much to increment the lat for each partition
+		double lonInc = Math.abs((MaxLon - MinLon)/numberColumns); //keeps track of how much to increment the lon for each partition
 		
 		//-----------------------Begin Partition-------------------------------------
 		double currentLat = MaxLat;
 		double currentLon = MaxLon;
 		
-		String Row, Column;
-		String sqlpar, sqlrn = "TRUNCATE TABLE "+database.getRNIndexTable()+"; ";
+		sql = "TRUNCATE TABLE "+database.getRNIndexTable()+"; ";
 		
 		System.out.print("Partitioning road network... ");
 		long start_time = System.currentTimeMillis();
 		
 		for(int j = 1; j <= numberColumns; j++){
-			for(int k = 1; k <= numberRows; k++){
-				Row = Integer.toString(j);
-				Column = Integer.toString(k);
-				sqlrn += "INSERT INTO "+database.getRNIndexTable()+" VALUES("+
-					     "'"+Row+"x"+Column+"', "+
-						 currentLat+", "+
-						 currentLon+", "+
-						 (currentLat - latInc)+", "+
-						 (currentLon - lonInc)+"); ";
+			for(int k = 1; k <= numberRows; k++){				
+				sql += "INSERT INTO "+database.getRNIndexTable()+" VALUES("+"'"+j+"x"+k+"', "+currentLat+", "+currentLon+", "+(currentLat - latInc)+", "+(currentLon - lonInc)+"); ";
+				sql += "CREATE TABLE "+j+"x"+k+" "+database.fileToString("files/PartitionRN.sql");
 					 
 				currentLon -= lonInc;
-				
-				sqlpar = "CREATE TABLE "+Row+"x"+Column+" "+database.fileToString("files/PartitionRN.sql");
-				database.updateQuery(sqlpar);
 			}
 			currentLat -= latInc; //decrease on row
 			currentLon = MaxLon; //set to first column
 		}
-		database.updateQuery(sqlrn);
+		database.updateQuery(sql);
 		
 		long total_time = System.currentTimeMillis() - start_time;
         System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
@@ -182,70 +172,38 @@ public class Road_Network {
 	}
 	
 	public void populatePartitionRN(){
-		String sql = database.fileToString("files/MergeNE.sql");
-		List<Map<String, Object>> resultsNE = database.exicuteQuery(sql);
+		String sql = "TRUNCATE TABLE mergedNE; "+
+					 "INSERT INTO mergedNE (seg_id, node1, node2, lat1, lon1, lat2, lon2) "+database.fileToString("files/MergeNE.sql");
+		database.updateQuery(sql);
 		
-		sql = "SELECT * FROM "+database.getRNIndexTable();
-		List<Map<String, Object>> resultsIndexs = database.exicuteQuery(sql);
+		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT * FROM "+database.getRNIndexTable());
 		
-		double lat1, lon1, lat2, lon2, maxLat, maxLon, minLat, minLon;
-		String tableInsert, segid, node1, node2;
+		
+		double maxLat, maxLon, minLat, minLon;
+		String tableInsert;
 		sql = "";
 		
 		System.out.print("Populating partitions... ");
 		long start_time = System.currentTimeMillis();
 		
-		int numMatches = 0;
-		boolean foundMatch = false;
-		for(int i = 0; i < resultsNE.size(); i++){
-			segid = resultsNE.get(i).get("seg_id").toString();
-			node1 = resultsNE.get(i).get("node1").toString();
-			node2 = resultsNE.get(i).get("node2").toString();
+		for(int j = 0; j < resultsIndexs.size(); j++){
+			tableInsert = resultsIndexs.get(j).get("table_id").toString();
 			
-			lat1 = Double.parseDouble(resultsNE.get(i).get("lat1").toString());
-			lon1 = Double.parseDouble(resultsNE.get(i).get("lon1").toString());
-			lat2 = Double.parseDouble(resultsNE.get(i).get("lat2").toString());
-			lon2 = Double.parseDouble(resultsNE.get(i).get("lon2").toString());
+			maxLat = Double.parseDouble(resultsIndexs.get(j).get("max_lat").toString());
+			maxLon = Double.parseDouble(resultsIndexs.get(j).get("max_lon").toString());
+			minLat = Double.parseDouble(resultsIndexs.get(j).get("min_lat").toString());
+			minLon = Double.parseDouble(resultsIndexs.get(j).get("min_lon").toString());
 			
-			for(int j = 0; j < resultsIndexs.size(); j++){
-				maxLat = Double.parseDouble(resultsIndexs.get(j).get("max_lat").toString());
-				maxLon = Double.parseDouble(resultsIndexs.get(j).get("max_lon").toString());
-				minLat = Double.parseDouble(resultsIndexs.get(j).get("min_lat").toString());
-				minLon = Double.parseDouble(resultsIndexs.get(j).get("min_lon").toString());
-				
-				if(NodeInIndex(maxLat, maxLon, minLat, minLon, lat1, lon1) || NodeInIndex(maxLat, maxLon, minLat, minLon, lat2, lon2)){
-					tableInsert = resultsIndexs.get(j).get("table_id").toString();
-					
-					sql += "INSERT INTO "+tableInsert+" VALUES ("+
-				    	       segid+", "+
-				    	       node1+", "+
-				    	       node2+", "+
-				    	       lat1+", "+
-				    	       lon1+", "+
-				    	       lat2+", "+
-				    	       lon2+"); ";
-					foundMatch = true;
-					break;
-				}
-				if(foundMatch){
-					numMatches++;
-					foundMatch = false;
-				}
-			}
+			sql += "TRUNCATE TABLE "+tableInsert+"; "+
+				   "INSERT INTO "+tableInsert+" (seg_id, node1, node2, lat1, lon1, lat2, lon2) "+
+				   "SELECT seg_id, node1, node2, lat1, lon1, lat2, lon2 "+
+				   "FROM mergedNE "+
+				   "WHERE (lat1<="+maxLat+" AND lon1<="+maxLon+" AND lat1>="+minLat+" AND lon1>="+minLon+") OR ("+
+				   "lat2<="+maxLat+" AND lon2<="+maxLon+" AND lat2>="+minLat+" AND lon2>="+minLon+"); ";
 		}
-		
 		database.updateQuery(sql);
 		
 		long total_time = System.currentTimeMillis() - start_time;
-        System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins; found "+ numMatches + " matches.");
-	}
-	
-	public boolean NodeInIndex(double maxLat, double maxLon, double minLat, double minLon, double lat, double lon){
-		if((lat <= maxLat && lat >= minLat) && (lon <= maxLon && lon >= minLon)){
-			return true;
-		}
-		else{
-			return false;
-		}
+        System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 }

@@ -182,6 +182,15 @@ public class DBMS {
 
 		return dist;
 	}
+	
+	public boolean coordsInBox(double maxLat, double maxLon, double minLat, double minLon, double lat, double lon){
+		if((lat <= maxLat && lat >= minLat) && (lon <= maxLon && lon >= minLon)){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
 
 	private static double deg2rad(double deg) {
 		return (deg * Math.PI / 180.0);

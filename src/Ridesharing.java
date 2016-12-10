@@ -1,5 +1,7 @@
 public class Ridesharing {
 	public static void main(String args[]){
+        long start_time = System.currentTimeMillis();
+        
 		//-----------------------reset database------------------------
 		DBMS database = new DBMS();
 		database.rebuildDatabase();
@@ -18,8 +20,11 @@ public class Ridesharing {
 		G.matchLogToSeg();
 		
 		//-----------------------read in incidents---------------------
-		//Incident I = new Incident();
-		//I.readInIncidents();
+		Incident I = new Incident();
+		I.readInIncidents();
+		
+		long total_time = System.currentTimeMillis() - start_time;
+		System.out.println("\t\tTotal Time: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 }
 

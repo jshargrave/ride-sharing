@@ -24,15 +24,17 @@ public class GPS_Data {
        		     		 "INSERT INTO "+database.getGPSTable()+" (car_id, log_time, lat, lon) "+
        		     		 "VALUES ";
             
+            StringBuilder sb = new StringBuilder();
             
             while((line = bufferedReader.readLine()) != null) {
-                sql += SanFransiscoGPS(line); //using the SanFransisco method
+            	sb.append(String.format("%s", SanFransiscoGPS(line)));
             }
+            sql += sb.toString();
             sql = sql.substring(0, sql.length() - 1) + ";";
             
             database.updateQuery(sql);
             long total_time = System.currentTimeMillis() - start_time;
-            System.out.println("Completed: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+            System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 
             // Always close files.
             bufferedReader.close();
@@ -72,10 +74,9 @@ public class GPS_Data {
 	
 	public void estimateSpeed(){
 		String sql = "SELECT * FROM "+database.getGPSTable();
-		
 		List<Map<String, Object>> results = database.exicuteQuery(sql);
 		
-		System.out.print("Estimating GPS logs speed... ");
+		System.out.print("Estimating GPS speed... ");
 		long start_time = System.currentTimeMillis();
 		
 		
@@ -124,7 +125,7 @@ public class GPS_Data {
 		database.updateQuery(sql);
 		
 		long total_time = System.currentTimeMillis() - start_time;
-        System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins; found ");
+        System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins; found ");
 	}
 	
 	private int convertTime(String s){
@@ -138,20 +139,18 @@ public class GPS_Data {
 	}
 	
 	public void matchLogToSeg(){
-		System.out.print("Matching GPS logs to segments... ");
+		System.out.print("Matching GPS to segments... ");
 		long start_time = System.currentTimeMillis();
 		
 		List<Map<String, Object>> GPSResults = database.exicuteQuery("SELECT * FROM "+database.getGPSTable());
 		List<Map<String, Object>> indexResults = database.exicuteQuery("SELECT * FROM "+database.getRNIndexTable());
 		List<Map<String, Object>> partitionResults;
 		
-		
-		
-		
-		String index;
-		String sql = "";
+		String sql, index, arg1;
 		int gps_id;
 		double maxlat, maxlon, minlat, minlon, lat, lon, lat1, lon1, lat2, lon2, segID, totalDist, minDist;
+		
+		StringBuilder sb = new StringBuilder();
 		
 		for(int j = 0; j < GPSResults.size(); j++){
 			
@@ -189,20 +188,18 @@ public class GPS_Data {
 						}
 					}
 					
-					sql += "UPDATE "+database.getGPSTable()+" SET index_id='"+index+"', seg_id='"+segID+"' WHERE gps_id="+gps_id+"; ";
-					
+					arg1 = "UPDATE "+database.getGPSTable()+" SET index_id='"+index+"', seg_id='"+segID+"' WHERE gps_id="+gps_id+"; ";
+					sb.append(String.format("%s", arg1));
 					break;
 					
 				}
 			}
 		}
+		sql = sb.toString();
 		database.updateQuery(sql);
 		
-		
-		
-		
 		long total_time = System.currentTimeMillis() - start_time;
-        System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+        System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 }
 

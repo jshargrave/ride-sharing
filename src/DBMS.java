@@ -126,13 +126,13 @@ public class DBMS {
 		
 		updateQuery(sql);
 		long total_time = System.currentTimeMillis() - start_time;
-		System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+		System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 		
 		System.out.printf("Building tables...");
 		start_time = System.currentTimeMillis();
 		buildTables();
 		total_time = System.currentTimeMillis() - start_time;
-		System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+		System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 		return;
 	}
 	

@@ -34,15 +34,18 @@ public class Road_Network {
             		     "INSERT INTO "+database.getEdgeTable()+" (seg_id, node1, node2) "+
             		     "VALUES ";
             
+            StringBuilder sb = new StringBuilder();
+            
             
             while((line = EdgeReader.readLine()) != null) {
-            	sql += MNTG_Edge(line);
+            	sb.append(String.format("%s", MNTG_Edge(line)));
             }
+            sql += sb.toString();
             sql = sql.substring(0, sql.length() - 1) + ";";
 
             database.updateQuery(sql);
             long total_time = System.currentTimeMillis() - start_time;
-            System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+            System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
                     
             EdgeReader.close();
 		}
@@ -56,7 +59,7 @@ public class Road_Network {
 	}
 	
 	public void ReadInNodes(){
-		String NodeLine;
+		String line;
 		
 		try{
 			
@@ -71,17 +74,19 @@ public class Road_Network {
             long start_time = System.currentTimeMillis();
             
             String sql = "TRUNCATE TABLE "+database.getNodeTable()+"; "+
-       		     "INSERT INTO "+database.getNodeTable()+" (node_id, lat, lon) "+
-       		     "VALUES ";
+       		     "INSERT INTO "+database.getNodeTable()+"(node_id, lat, lon) VALUES ";
             
-            while((NodeLine = NodeReader.readLine()) != null){
-            	sql += MNTG_Node(NodeLine);
+            StringBuilder sb = new StringBuilder();
+            
+            while((line = NodeReader.readLine()) != null){
+            	sb.append(String.format("%s", MNTG_Node(line)));
             }
+            sql += sb.toString();
             sql = sql.substring(0, sql.length() - 1) + ";";
             
             database.updateQuery(sql);
             long total_time = System.currentTimeMillis() - start_time;
-            System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+            System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
                     
             NodeReader.close();
 		}
@@ -148,16 +153,19 @@ public class Road_Network {
 		double currentLon = MaxLon;
 		
 		sql = "TRUNCATE TABLE "+database.getRNIndexTable()+"; ";
+		StringBuilder sb = new StringBuilder();
 		
-		System.out.print("Partitioning road network... ");
+		System.out.print("Partitioning RN... ");
 		long start_time = System.currentTimeMillis();
 		
+		String arg1, arg2;
 		int j = 1, k = 1;
 		while(currentLon >= MinLon){
 			while(currentLat >= MinLat){
-				sql += "INSERT INTO "+database.getRNIndexTable()+" VALUES("+"'"+j+"x"+k+"', "+currentLat+", "+currentLon+", "+(currentLat - latInc)+", "+(currentLon - lonInc)+"); ";
-				sql += "CREATE TABLE "+j+"x"+k+" "+database.fileToString("files/PartitionRN.sql");
+				arg1 = "INSERT INTO "+database.getRNIndexTable()+" VALUES("+"'"+j+"x"+k+"', "+currentLat+", "+currentLon+", "+(currentLat - latInc)+", "+(currentLon - lonInc)+"); ";
+				arg2 = "CREATE TABLE "+j+"x"+k+" "+database.fileToString("files/PartitionRN.sql");
 				
+				sb.append(String.format("%s%s", arg1, arg2));
 				currentLat -= latInc;
 				k++;
 			}
@@ -166,10 +174,11 @@ public class Road_Network {
 			k = 1;
 			j++;
 		}
+		sql += sb.toString();
 		database.updateQuery(sql);
 		
 		long total_time = System.currentTimeMillis() - start_time;
-        System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+        System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
           
 		
 		return;
@@ -185,9 +194,10 @@ public class Road_Network {
 		
 		double maxLat, maxLon, minLat, minLon;
 		String tableInsert;
-		sql = "";
+		String arg1;
+		StringBuilder sb = new StringBuilder();
 		
-		System.out.print("Populating partitions... ");
+		System.out.print("Populating RNPs... ");
 		long start_time = System.currentTimeMillis();
 		
 		for(int j = 0; j < resultsIndexs.size(); j++){
@@ -198,17 +208,20 @@ public class Road_Network {
 			minLat = Double.parseDouble(resultsIndexs.get(j).get("min_lat").toString());
 			minLon = Double.parseDouble(resultsIndexs.get(j).get("min_lon").toString());
 			
-			sql += "TRUNCATE TABLE "+tableInsert+"; "+
+			arg1 = "TRUNCATE TABLE "+tableInsert+"; "+
 				   "INSERT INTO "+tableInsert+" (seg_id, node1, node2, lat1, lon1, lat2, lon2) "+
 				   "SELECT seg_id, node1, node2, lat1, lon1, lat2, lon2 "+
 				   "FROM mergedNE "+
 				   "WHERE (lat1<="+maxLat+" AND lon1<="+maxLon+" AND lat1>="+minLat+" AND lon1>="+minLon+") OR ("+
 				   "lat2<="+maxLat+" AND lon2<="+maxLon+" AND lat2>="+minLat+" AND lon2>="+minLon+"); ";
+			
+			sb.append(String.format("%s", arg1));
 		}
+		sql = sb.toString();
 		database.updateQuery(sql);
 		
 		long total_time = System.currentTimeMillis() - start_time;
-        System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+        System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 	
 	public int countPartitionEntries(){

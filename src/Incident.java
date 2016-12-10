@@ -14,12 +14,11 @@ public class Incident {
 		long start_time = System.currentTimeMillis();
 		
 		String incidents = getIncidents(); //returns a string containing the incidents from the api
-		String sql = "TRUNCATE TABLE "+database.getIncTable()+"; "; 
-		sql += tomtomToSQL(incidents); //converts the string to sql code
+		String sql = tomtomToSQL(incidents); //converts the string to sql code
 		database.updateQuery(sql); //queries the sql code to the database
 		
 		long total_time = System.currentTimeMillis() - start_time;
-		System.out.println("\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+		System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 		return;
 	}
 	
@@ -36,18 +35,22 @@ public class Incident {
 	}
 	
 	private String tomtomToSQL(String incidents){
-		String sql = "";
+		String sql = "TRUNCATE TABLE "+database.getIncTable()+"; "+
+				     "INSERT INTO "+database.getIncTable()+"(inc_id, lat, lon, category, from_road, to_road, distance_delay, delay_time) VALUES ";
 		int start = 0, end = 0;
 		
+		StringBuilder sb = new StringBuilder();
 		String inc;
 		while((start = incidents.indexOf("<poi>", start)) != -1){
 			end = incidents.indexOf("</poi>", start);
 			inc = incidents.substring(start, end);
 			
-			sql += IncidentToSQL(inc);
+			sb.append(String.format("%s", IncidentToSQL(inc)));
 			start = end;
 		}
-		return sql;
+		sql += sb.toString();
+
+		return sql.substring(0, sql.length() - 1) + ";";
 	}
 	
 	private String IncidentToSQL(String inc){
@@ -127,14 +130,6 @@ public class Incident {
 		}
 		
 		
-		return   "INSERT INTO "+database.getIncTable()+" VALUES ("+
-	    	     "\""+id+"\", "+
-	    	     lat+", "+
-	    	     lon+", "+
-	    	     category+", "+
-	    	     "\""+from+"\", "+
-	    	     "\""+to+"\", "+
-	    	     length+", "+
-	    	     delay+"); ";
+		return   "('"+id+"',"+lat+","+lon+","+category+",'"+from+"',"+"'"+to+"',"+length+","+delay+"),";
 	}
 }

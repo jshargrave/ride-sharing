@@ -7,4 +7,5 @@
 	lat1 DOUBLE, 
 	lon1 DOUBLE,
 	lat2 DOUBLE, 
-	lon2 DOUBLE);
+	lon2 DOUBLE,
+	speed FLOAT DEFAULT '-1'); 

@@ -129,7 +129,7 @@ public class Incident {
 			delay = "-1";
 		}
 		
-		
-		return   "('"+id+"',"+lat+","+lon+","+category+",'"+from+"',"+"'"+to+"',"+length+","+delay+"),";
+		//note: strings should be surrounded by double quotes because street names can contain single quotes
+		return   "(\""+id+"\","+lat+","+lon+","+category+",\""+from+"\","+"\""+to+"\","+length+","+delay+"),";
 	}
 }

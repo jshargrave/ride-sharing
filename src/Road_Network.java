@@ -1,9 +1,11 @@
 import java.io.*;
+import java.time.LocalTime;
 import java.util.*;
 
 public class Road_Network {	
 	static String NodeFile = "files/Nodes.txt";
 	static String EdgeFile = "files/Edges.txt";
+	int TimeInc = 60; //time increment to partition road networks by in minutes, the increment should be a multiple of 24*60
 	
 	int partitionSize = 1; //measured in kilometers
 	
@@ -162,8 +164,8 @@ public class Road_Network {
 		int j = 1, k = 1;
 		while(currentLon >= MinLon){
 			while(currentLat >= MinLat){
-				arg1 = "INSERT INTO "+database.getRNIndexTable()+" VALUES("+"'"+j+"x"+k+"', "+currentLat+", "+currentLon+", "+(currentLat - latInc)+", "+(currentLon - lonInc)+"); ";
-				arg2 = "CREATE TABLE "+j+"x"+k+" "+database.fileToString("files/PartitionRN.sql");
+				arg1 = "INSERT INTO "+database.getRNIndexTable()+" VALUES("+"'I"+j+"x"+k+"', "+currentLat+", "+currentLon+", "+(currentLat - latInc)+", "+(currentLon - lonInc)+"); ";
+				arg2 = "CREATE TABLE I"+j+"x"+k+" "+database.fileToString("files/PartitionRN.sql");
 				
 				sb.append(String.format("%s%s", arg1, arg2));
 				currentLat -= latInc;
@@ -224,9 +226,71 @@ public class Road_Network {
         System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 	
+	public void purgePartitions(){
+		System.out.print("Purging RNPs... ");
+		long start_time = System.currentTimeMillis();
+		
+		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT table_id FROM "+database.getRNIndexTable());
+		List<Map<String, Object>> index;
+		
+		StringBuilder sb = new StringBuilder();
+		String tableName, arg1;
+		for(int i = 0; i < resultsIndexs.size(); i++){
+			tableName = resultsIndexs.get(i).get("table_id").toString();
+			index = database.exicuteQuery("SELECT seg_id FROM "+tableName);
+			
+			if(index.size() == 0){
+				arg1 = "DROP TABLE "+tableName+"; DELETE FROM rn_index WHERE table_id='"+tableName+"';";
+				sb.append(String.format("%s", arg1));
+			}
+		}
+		database.updateQuery(sb.toString());
+		
+		long total_time = System.currentTimeMillis() - start_time;
+        System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+	}
+	
+	public void timePartitions(){
+		System.out.print("Partitioning time... ");
+		long start_time = System.currentTimeMillis();
+		
+		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT table_id FROM "+database.getRNIndexTable());
+		
+		StringBuilder sb1 = new StringBuilder();
+		StringBuilder sb2 = new StringBuilder();
+		String arg1, arg2, tableNameTime, tableName;
+		
+		LocalTime time;
+		for(int j = 0; j < resultsIndexs.size(); j++){
+			tableName = resultsIndexs.get(j).get("table_id").toString();
+			
+			time = LocalTime.of(0, 0, 0);
+			for(int i = 1; i <= (60/TimeInc) * 24; i++){
+				tableNameTime = tableName + "T"+time.toString().replaceAll(":", "_");
+				
+				arg1 = "CREATE TABLE "+tableNameTime+" "+database.fileToString("files/PartitionRN.sql");
+				sb1.append(String.format("%s", arg1));
+				
+				arg2 = "INSERT INTO "+tableNameTime+" SELECT * FROM "+tableName+"; ";
+				sb2.append(String.format("%s", arg2));
+				
+				time = time.plusMinutes(TimeInc);
+			}
+		}
+		database.updateQuery(sb1.toString());
+		database.updateQuery(sb2.toString());
+		
+		long total_time = System.currentTimeMillis() - start_time;
+        System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+	}
+	
 	public int countPartitionEntries(){
 		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT * FROM "+database.getRNIndexTable());
 		List<Map<String, Object>> partition;
+		
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.HOUR_OF_DAY, 0);
+		
 		
 		int entries = 0;
 		String index;
@@ -237,4 +301,5 @@ public class Road_Network {
 		}
 		return entries;
 	}
+	
 }

@@ -12,6 +12,8 @@ public class Ridesharing {
 		R.ReadInNodes();
 		R.partitionRN();
 		R.populatePartitionRN();
+		R.purgePartitions();
+		R.timePartitions();
 		
 		//-----------------------read in GPS data----------------------
 		GPS_Data G = new GPS_Data();
@@ -24,7 +26,7 @@ public class Ridesharing {
 		I.readInIncidents();
 		
 		long total_time = System.currentTimeMillis() - start_time;
-		System.out.println("\t\tTotal Time: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+		System.out.println("Total Time: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 }
 

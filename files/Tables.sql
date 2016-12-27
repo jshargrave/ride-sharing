@@ -22,7 +22,7 @@ CREATE TABLE tmp_gps (
 	car_id INT,
 	index_id VARCHAR(50) DEFAULT '0x0',
 	seg_id BIGINT DEFAULT '-1',
-	log_time TIME,
+	log_time VARCHAR(50),
 	lat DOUBLE,
 	lon DOUBLE,
 	speed FLOAT DEFAULT '-1');

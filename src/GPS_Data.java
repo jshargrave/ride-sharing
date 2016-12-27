@@ -1,9 +1,11 @@
 import java.io.*;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
 public class GPS_Data {
 	static String GPSFile = "files/SanFransisco.txt"; //file to read in
+	int TimeInc = 60; //time increment to partition road networks by in minutes, the increment should be a multiple of 24*60
 	
 	DBMS database = new DBMS(); //used to read in road network to database
 	
@@ -197,6 +199,39 @@ public class GPS_Data {
 		}
 		sql = sb.toString();
 		database.updateQuery(sql);
+		
+		long total_time = System.currentTimeMillis() - start_time;
+        System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+	}
+	
+	public void AvgSpeedToSeg(){
+		System.out.print("Matching avg speed to segments... ");
+		long start_time = System.currentTimeMillis();
+		
+		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT table_id FROM "+database.getRNIndexTable());
+		
+		StringBuilder sb1 = new StringBuilder();
+		String arg1, tableNameTime, tableName;
+		
+		LocalTime time;
+		for(int j = 0; j < resultsIndexs.size(); j++){
+			tableName = resultsIndexs.get(j).get("table_id").toString();
+			
+			time = LocalTime.of(0, 0, 0);
+			for(int i = 1; i <= (60/TimeInc) * 24; i++){
+				tableNameTime = tableName + "T"+time.toString().replaceAll(":", "_");
+				
+				arg1 = "INSERT INTO "+tableNameTime+" "+
+					   "SELECT G.seg_id, AVG(speed) "+
+					   "FROM tmp_gps AS G "+
+					   "WHERE G.index_id='"+tableName+"' AND log_time BETWEEN '"+time.toString()+"' AND '"+time.plusMinutes(TimeInc).toString()+"' "+
+					   "GROUP BY G.seg_id; ";
+				
+				sb1.append(String.format("%s", arg1));
+				time = time.plusMinutes(TimeInc);
+			}
+		}
+		database.updateQuery(sb1.toString());
 		
 		long total_time = System.currentTimeMillis() - start_time;
         System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");

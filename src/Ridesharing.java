@@ -20,6 +20,7 @@ public class Ridesharing {
 		G.readInGPS();
 		G.estimateSpeed();
 		G.matchLogToSeg();
+		G.AvgSpeedToSeg();
 		
 		//-----------------------read in incidents---------------------
 		Incident I = new Incident();

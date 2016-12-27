@@ -250,6 +250,17 @@ public class Road_Network {
         System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 	
+	//merges partitions who have very few segments inside its boundaries
+	void MergePartitions(){
+		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT table_id FROM "+database.getRNIndexTable());
+		
+		StringBuilder sb = new StringBuilder();
+		String tableName, arg1;
+		for(int i = 0; i < resultsIndexs.size(); i++){
+			tableName = resultsIndexs.get(i).get("table_id").toString();
+		}
+	}
+	
 	public void timePartitions(){
 		System.out.print("Partitioning time... ");
 		long start_time = System.currentTimeMillis();
@@ -257,7 +268,6 @@ public class Road_Network {
 		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT table_id FROM "+database.getRNIndexTable());
 		
 		StringBuilder sb1 = new StringBuilder();
-		StringBuilder sb2 = new StringBuilder();
 		String arg1, arg2, tableNameTime, tableName;
 		
 		LocalTime time;
@@ -268,38 +278,21 @@ public class Road_Network {
 			for(int i = 1; i <= (60/TimeInc) * 24; i++){
 				tableNameTime = tableName + "T"+time.toString().replaceAll(":", "_");
 				
-				arg1 = "CREATE TABLE "+tableNameTime+" "+database.fileToString("files/PartitionRN.sql");
+				arg1 = "CREATE TABLE "+tableNameTime+" (seg_id BIGINT PRIMARY KEY,speed FLOAT DEFAULT '-1');";//AS (SELECT seg_id FROM "+tableName+" ORDER BY seg_id);";
 				sb1.append(String.format("%s", arg1));
-				
-				arg2 = "INSERT INTO "+tableNameTime+" SELECT * FROM "+tableName+"; ";
-				sb2.append(String.format("%s", arg2));
 				
 				time = time.plusMinutes(TimeInc);
 			}
 		}
 		database.updateQuery(sb1.toString());
-		database.updateQuery(sb2.toString());
 		
 		long total_time = System.currentTimeMillis() - start_time;
         System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 	
-	public int countPartitionEntries(){
-		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT * FROM "+database.getRNIndexTable());
-		List<Map<String, Object>> partition;
-		
-		Calendar calendar = Calendar.getInstance();
-		calendar.set(Calendar.HOUR_OF_DAY, 0);
-		
-		
-		int entries = 0;
-		String index;
-		for(int j = 0; j < resultsIndexs.size(); j++){
-				index = resultsIndexs.get(j).get("table_id").toString();
-				partition = database.exicuteQuery("SELECT * FROM "+index);
-				entries += partition.size();
-		}
-		return entries;
+	public int countEntries(String index){
+		List<Map<String, Object>> results = database.exicuteQuery("SELECT * FROM "+index);
+		return results.size();
 	}
 	
 }

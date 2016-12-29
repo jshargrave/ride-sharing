@@ -1,6 +1,8 @@
+
 public class Ridesharing {
 	public static void main(String args[]){
         long start_time = System.currentTimeMillis();
+        
         
 		//-----------------------reset database------------------------
 		DBMS database = new DBMS();
@@ -25,7 +27,8 @@ public class Ridesharing {
 		//-----------------------read in incidents---------------------
 		Incident I = new Incident();
 		I.readInIncidents();
-		
+		//System.out.println(Arrays.toString(I.getIncidentCoords("S_Main_St&Lombard&Roosevelt_Rd,IL-38")));
+
 		long total_time = System.currentTimeMillis() - start_time;
 		System.out.println("Total Time: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}

@@ -11,12 +11,7 @@ public class Road_Network {
 	
 	DBMS database = new DBMS(); //used to read in road network to database
 	
-	
-	Road_Network(){
-		//ReadInEdges();
-		//ReadInNodes();
-		//mergeNodeEdge();
-	}
+	//reads in the edges
 	public void ReadInEdges(){		
 		String line = null;
 		try{
@@ -60,6 +55,7 @@ public class Road_Network {
 		return;
 	}
 	
+	//reads in the nodes
 	public void ReadInNodes(){
 		String line;
 		
@@ -101,6 +97,7 @@ public class Road_Network {
 		return;
 	}
 	
+	//uses the MNTG method to parse a edge to sql to insert into the database
 	private String MNTG_Edge(String EdgeLine){
 		int start = 0;
     	int end = EdgeLine.indexOf(",", start);
@@ -117,6 +114,7 @@ public class Road_Network {
     	return "("+E_id+","+E_node1+","+E_node2+"),";
 	}
 	
+	//uses the MNTG method to parse a node to sql to insert into the database
 	private String MNTG_Node(String NodeLine){
 		int start = 0;
     	int end = NodeLine.indexOf(",", start);
@@ -133,6 +131,7 @@ public class Road_Network {
     	return "("+N_id+","+lat+","+lon+"),";
 	}	
 	
+	//partitions the road network and creates a index table and partitioned road network tables
 	public void partitionRN(){
 		String sql = "SELECT MAX(lat), MIN(lat), MAX(lon), MIN(lon) "+
 				     "FROM "+database.getNodeTable();
@@ -186,6 +185,7 @@ public class Road_Network {
 		return;
 	}
 	
+	//populates the partitioned road network tables with segments
 	public void populatePartitionRN(){
 		String sql = "TRUNCATE TABLE mergedNE; "+
 					 "INSERT INTO mergedNE (seg_id, node1, node2, lat1, lon1, lat2, lon2) "+database.fileToString("files/MergeNE.sql");
@@ -226,6 +226,7 @@ public class Road_Network {
         System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 	
+	//removes empty partitions
 	public void purgePartitions(){
 		System.out.print("Purging RNPs... ");
 		long start_time = System.currentTimeMillis();
@@ -250,17 +251,7 @@ public class Road_Network {
         System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 	
-	//merges partitions who have very few segments inside its boundaries
-	void MergePartitions(){
-		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT table_id FROM "+database.getRNIndexTable());
-		
-		StringBuilder sb = new StringBuilder();
-		String tableName, arg1;
-		for(int i = 0; i < resultsIndexs.size(); i++){
-			tableName = resultsIndexs.get(i).get("table_id").toString();
-		}
-	}
-	
+	//partitions the road network into time partitions, based on the TimeInc variable
 	public void timePartitions(){
 		System.out.print("Partitioning time... ");
 		long start_time = System.currentTimeMillis();
@@ -268,7 +259,7 @@ public class Road_Network {
 		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT table_id FROM "+database.getRNIndexTable());
 		
 		StringBuilder sb1 = new StringBuilder();
-		String arg1, arg2, tableNameTime, tableName;
+		String arg1, tableNameTime, tableName;
 		
 		LocalTime time;
 		for(int j = 0; j < resultsIndexs.size(); j++){
@@ -278,7 +269,7 @@ public class Road_Network {
 			for(int i = 1; i <= (60/TimeInc) * 24; i++){
 				tableNameTime = tableName + "T"+time.toString().replaceAll(":", "_");
 				
-				arg1 = "CREATE TABLE "+tableNameTime+" (seg_id BIGINT PRIMARY KEY,speed FLOAT DEFAULT '-1');";//AS (SELECT seg_id FROM "+tableName+" ORDER BY seg_id);";
+				arg1 = "CREATE TABLE "+tableNameTime+" (seg_id BIGINT PRIMARY KEY,speed FLOAT DEFAULT '-1');";
 				sb1.append(String.format("%s", arg1));
 				
 				time = time.plusMinutes(TimeInc);
@@ -289,10 +280,4 @@ public class Road_Network {
 		long total_time = System.currentTimeMillis() - start_time;
         System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
-	
-	public int countEntries(String index){
-		List<Map<String, Object>> results = database.exicuteQuery("SELECT * FROM "+index);
-		return results.size();
-	}
-	
 }

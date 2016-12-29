@@ -28,14 +28,19 @@ CREATE TABLE tmp_gps (
 	speed FLOAT DEFAULT '-1');
 	
 CREATE TABLE tmp_incidents (
-	inc_id VARCHAR(50) PRIMARY KEY,
+	inc_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+	inc VARCHAR(50),
 	lat DOUBLE,
 	lon DOUBLE,
 	category INTEGER,
 	from_road VARCHAR(100),
 	to_road VARCHAR(100),
 	distance_delay INTEGER,
-	delay_time INTEGER);
+	delay_time INTEGER,
+	start_lat DOUBLE,
+	start_lon DOUBLE,
+	end_lat DOUBLE,
+	end_lon DOUBLE);
 	
 CREATE TABLE rn_index(
 	table_id VARCHAR(50) PRIMARY KEY,

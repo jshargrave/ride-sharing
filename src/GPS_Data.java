@@ -74,13 +74,13 @@ public class GPS_Data {
         return "("+id+", '"+time+"', "+lat+", "+lon+"),";
 	}
 	
+	//Estimates the speed between gps points in the database
 	public void estimateSpeed(){
 		String sql = "SELECT * FROM "+database.getGPSTable();
 		List<Map<String, Object>> results = database.exicuteQuery(sql);
 		
 		System.out.print("Estimating GPS speed... ");
 		long start_time = System.currentTimeMillis();
-		
 		
 		boolean newID = true;
 		
@@ -130,6 +130,7 @@ public class GPS_Data {
         System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins; found ");
 	}
 	
+	//passed a time variable HH:MM:SS and then converts it to a integer value
 	private int convertTime(String s){
 		String[] timef=s.split(":");  
 
@@ -140,6 +141,7 @@ public class GPS_Data {
 		return second + (60 * minute) + (3600 * hour);
 	}
 	
+	//matches all the gps logs to segments and indexes
 	public void matchLogToSeg(){
 		System.out.print("Matching GPS to segments... ");
 		long start_time = System.currentTimeMillis();
@@ -204,6 +206,7 @@ public class GPS_Data {
         System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 	
+	//matches the average speed of segments with data to correct time partitions
 	public void AvgSpeedToSeg(){
 		System.out.print("Matching avg speed to segments... ");
 		long start_time = System.currentTimeMillis();

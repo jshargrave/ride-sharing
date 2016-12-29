@@ -20,6 +20,7 @@ public class DBMS {
 	// JDBC driver name and database URL
 	static String DB_URL = "jdbc:mysql://localhost:3306/"+databaseName+"?allowMultiQueries=true";
 	
+	//used for updating the database, example insert
 	public void updateQuery(String sql) {
 	   Connection conn = null;
 	   Statement stmt = null;
@@ -58,7 +59,8 @@ public class DBMS {
 	   return;
 	}
 	
-	/* Returns a List<Map<String, Object>>, list items can be accessed by List.get(int index), Map items can be accessed by Map.get("column name")*/
+	//used for retrieving data from the database
+	//Returns a List<Map<String, Object>>, list items can be accessed by List.get(int index), Map items can be accessed by Map.get("column name")
 	public List<Map<String, Object>> exicuteQuery(String sql){
 		Connection conn = null;
 		Statement stmt = null;
@@ -113,29 +115,23 @@ public class DBMS {
 		return resultList;
 	}
 	
-	private void buildTables(){
-		String sql = fileToString(tableFile);
-		updateQuery(sql);
-		return;
-	}
+	//removes all tables and then rebuilds them
 	public void rebuildDatabase(){
-		System.out.printf("Clearing database...");
+		System.out.printf("Rebuilding database...");
 		long start_time = System.currentTimeMillis();
-		String sql = "DROP DATABASE "+databaseName+"; " + 
-				     "CREATE DATABASE "+databaseName+";";
 		
+		//drop database and then remake it
+		String sql = "DROP DATABASE "+databaseName+"; CREATE DATABASE "+databaseName+";";
 		updateQuery(sql);
+		
+		//build primary tables
+		updateQuery(fileToString(tableFile));
+		
 		long total_time = System.currentTimeMillis() - start_time;
 		System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
-		
-		System.out.printf("Building tables...");
-		start_time = System.currentTimeMillis();
-		buildTables();
-		total_time = System.currentTimeMillis() - start_time;
-		System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
-		return;
 	}
 	
+	//returns a string of all the text contained in a file
 	public String fileToString(String filename){
 		String line, sql = "";
 		
@@ -162,6 +158,7 @@ public class DBMS {
 		return sql;
 	}
 	
+	//takes two sets of lat/lon coordinates and the units to measure by and returns the distance between
 	public double distance(double lat1, double lon1, double lat2, double lon2, String unit) {
 		double theta = lon1 - lon2;
 		double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
@@ -183,6 +180,7 @@ public class DBMS {
 		return dist;
 	}
 	
+	//Checks to see if a set of coordinates are located within a box of coordinates (MaxLat/MaxLon, MinLat/MinLon)
 	public boolean coordsInBox(double maxLat, double maxLon, double minLat, double minLon, double lat, double lon){
 		if((lat <= maxLat && lat >= minLat) && (lon <= maxLon && lon >= minLon)){
 			return true;

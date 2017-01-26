@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -12,20 +14,19 @@ public class Incident {
 	String coords[] = {"42.055593", "-88.036812", "41.622812", "-87.444923"};
 	String coordsString = coords[0]+","+coords[1]+","+coords[2]+","+coords[3];
 
-	String TomTomIncidentURL = "https://api.tomtom.com/traffic/services/4/incidentDetails/s1/"+coordsString+"/12/-1/xml?projection=EPSG4326&key="+TomTomKeyIncident;
+	String TomTomIncidentURL = "https://api.tomtom.com/traffic/services/4/incidentDetails/s1/"+coordsString+"/12/-1/xml?key="+TomTomKeyIncident+"&projection=EPSG4326&expandCluster=Yes&originalPosition=Yes";
 	String TomTomAddressURL = "";
 	
 	OkHttpClient client = new OkHttpClient();
 	DBMS database = new DBMS();
 	
-	//pull incident data from api and loads it into database
+	//pull incident data from API and loads it into database
 	public void readInIncidents(){
 		System.out.print("Reading Incidents...");
 		long start_time = System.currentTimeMillis();
-		
+
 		String incidents = queryAPI(TomTomIncidentURL); //returns a string containing the incidents from the api
-		String sql = tomtomToSQL(incidents); //converts the string to sql code
-		database.updateQuery(sql); //queries the sql code to the database
+		database.updateQuery(tomtomToSQL(incidents)); //queries the sql code to the database
 		
 		long total_time = System.currentTimeMillis() - start_time;
 		System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
@@ -68,7 +69,7 @@ public class Incident {
 	//converts a single tomtom incident to a sql format to be inserted into the database
 	private String IncidentToSQL(String inc){
 		int start = 0, end = 0;
-		String id, lat, lon, category, from, to, length, delay;
+		String id, lat = "-1", lon = "-1", category, from, to, length, delay;
 		
 		//id
 		if((start = inc.indexOf("<id>", start)) != -1){
@@ -79,19 +80,18 @@ public class Incident {
 			return "";
 		}
 		
-		//lat
-		if((start = inc.indexOf("<x>", start) + "<x>".length()) != -1 + "<x>".length()){
-			end = inc.indexOf("</x>", start);
-			lon = inc.substring(start, end);
-		}
-		else{
-			return "";
-		}
-		
-		//lon
-		if((start = inc.indexOf("<y>", start) + "<y>".length()) != -1 + "<y>".length()){
-			end = inc.indexOf("</y>", start);
-			lat = inc.substring(start, end);
+		if((start = inc.indexOf("<op>", start) + "<op>".length()) != -1 + "<op>".length()){
+			//lat
+			if((start = inc.indexOf("<x>", start) + "<x>".length()) != -1 + "<x>".length()){
+				end = inc.indexOf("</x>", start);
+				lon = inc.substring(start, end);
+			}
+			
+			//lon
+			if((start = inc.indexOf("<y>", start) + "<y>".length()) != -1 + "<y>".length()){
+				end = inc.indexOf("</y>", start);
+				lat = inc.substring(start, end);
+			}
 		}
 		else{
 			return "";
@@ -148,7 +148,50 @@ public class Incident {
 		return   "(\""+id+"\","+lat+","+lon+","+category+",\""+from+"\","+"\""+to+"\","+length+","+delay+"),";
 	}
 	
-	//parses the address recieved from the incident api so that it can be used with the search api
+	public void matchIncidentToIndex(){
+		System.out.print("Matching Inc to Seg... ");
+		long start_time = System.currentTimeMillis();
+		
+		List<Map<String, Object>> incidentResults = database.exicuteQuery("SELECT inc_id, lat, lon, distance_delay, delay_time FROM "+database.getIncTable());
+		List<Map<String, Object>> indexResults = database.exicuteQuery("SELECT * FROM "+database.getRNIndexTable());
+		
+		StringBuilder sb = new StringBuilder();
+		String incID, index, arg1 = "";
+		
+		double lat, lon, maxLat, maxLon, minLat, minLon;
+		for(int i = 0; i < incidentResults.size(); i++){
+			incID = incidentResults.get(i).get("inc_id").toString();
+			lat = Double.parseDouble(incidentResults.get(i).get("lat").toString());
+			lon = Double.parseDouble(incidentResults.get(i).get("lon").toString());
+			
+			
+			for(int j = 0; j < indexResults.size(); j++){
+				index = indexResults.get(j).get("table_id").toString();
+				maxLat = Double.parseDouble(indexResults.get(j).get("max_lat").toString());
+				maxLon = Double.parseDouble(indexResults.get(j).get("max_lon").toString());
+				minLat = Double.parseDouble(indexResults.get(j).get("min_lat").toString());
+				minLon = Double.parseDouble(indexResults.get(j).get("min_lon").toString());
+
+				if(database.coordsInBox(maxLat, maxLon, minLat, minLon, lat, lon)){
+					arg1 = "UPDATE "+database.getIncTable()+" SET index_id='"+index+"' WHERE inc_id="+incID+"; ";
+					sb.append(String.format("%s", arg1));
+					break;
+				}
+			}
+		}
+		String sql = sb.toString();
+		if(sql == ""){
+			database.updateQuery(sb.toString());
+		}
+		
+		long total_time = System.currentTimeMillis() - start_time;
+        System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
+		return;
+	}
+		
+		
+	
+	//parses the address received from the incident api so that it can be used with the search api
 	private String parseAddress(String S){
 		return S.replace("/", ",").replace(" (", "&").replace(")", "").replace(" ", "_");
 	}
@@ -158,16 +201,19 @@ public class Incident {
 		String url = "https://api.tomtom.com/search/2/search/"+S+".xml?key="+TomTomKeySearch+"&countrySet=US?topleft="+coords[0]+","+coords[1]+"?btmRight="+coords[2]+","+coords[3]+"&idxSet=Xstr";
 		String search = queryAPI(url);
 		
+		double lat = -1, lon = -1;
 		int start = 0, end = 0;
 		
-		start = search.indexOf("<lat>", start) + "<lat>".length();
-		end = search.indexOf("</lat>", start);
-		double lat = Double.parseDouble(search.substring(start, end));
+		if((start = search.indexOf("<lat>", start) + "<lat>".length()) != -1 + "<lat>".length()){
+			end = search.indexOf("</lat>", start);
+			lat = Double.parseDouble(search.substring(start, end));
+		}
 		
-		start = search.indexOf("<lon>", start) + "<lon>".length();
-		end = search.indexOf("</lon>", start);
-		double lon = Double.parseDouble(search.substring(start, end));
-		
+		if((start = search.indexOf("<lon>", start) + "<lon>".length()) != -1 + "<lon>".length()){
+			end = search.indexOf("</lon>", start);
+			lon = Double.parseDouble(search.substring(start, end));
+		}
+
 		double results[] = {lat, lon};
 		return results;
 	}

@@ -37,10 +37,8 @@ CREATE TABLE tmp_incidents (
 	to_road VARCHAR(100),
 	distance_delay INTEGER,
 	delay_time INTEGER,
-	start_lat DOUBLE,
-	start_lon DOUBLE,
-	end_lat DOUBLE,
-	end_lon DOUBLE);
+	index_id VARCHAR(50) DEFAULT '0x0',
+	seg_id BIGINT DEFAULT '-1');
 	
 CREATE TABLE rn_index(
 	table_id VARCHAR(50) PRIMARY KEY,

@@ -251,6 +251,21 @@ public class Road_Network {
         System.out.println("\t\tCompleted: " + total_time + " MilliSeconds, " + total_time/1000 + " Seconds, " + total_time/(1000 * 60) + " Mins");
 	}
 	
+	/*
+	public void mergePartitions(){
+		int MinSegments = 100; //this is the minimuim amount of segments a partition can have without being considered for merging
+		
+		List<Map<String, Object>> resultsIndexs = database.exicuteQuery("SELECT * FROM "+database.getRNIndexTable());
+		
+		for(int i = 0; i < resultsIndexs.size(), i++){
+			int size; //holds the size of the partition under consideration
+			if(size < MinSegments){
+				char Dir = MinDir(N, S, E, W); //finds the min segments in a North, South East, and West directions
+				MergeForDir(MinDir); //takes the direction of min segments and merges the partitions
+			}
+		}
+	}*/
+	
 	//partitions the road network into time partitions, based on the TimeInc variable
 	public void timePartitions(){
 		System.out.print("Partitioning time... ");

@@ -1,0 +1,58 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/cygdrive/c/Users/Joseph/Desktop/Code/Research/Dynamic Shortest Path/RoadNetwork.h
+map
+-
+vector
+-
+string
+-
+fstream
+-
+cmath
+-
+cstdlib
+-
+ctime
+-
+map
+-
+algorithm
+-
+
+/cygdrive/c/Users/Joseph/Desktop/Code/Research/Dynamic Shortest Path/Search.h
+queue
+-
+ctime
+-
+fstream
+-
+limits
+-
+iostream
+-
+map
+-
+math.h
+-
+algorithm
+-
+Search.hpp
+/cygdrive/c/Users/Joseph/Desktop/Code/Research/Dynamic Shortest Path/Search.hpp
+
+/cygdrive/c/Users/Joseph/Desktop/Code/Research/Dynamic Shortest Path/Search.hpp
+
+/cygdrive/c/Users/Joseph/Desktop/Code/Research/Dynamic Shortest Path/main.cpp
+iostream
+-
+Search.h
+/cygdrive/c/Users/Joseph/Desktop/Code/Research/Dynamic Shortest Path/Search.h
+RoadNetwork.h
+/cygdrive/c/Users/Joseph/Desktop/Code/Research/Dynamic Shortest Path/RoadNetwork.h
+

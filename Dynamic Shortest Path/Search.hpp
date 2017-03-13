@@ -36,6 +36,7 @@ void Search<T>::a_star(string s, string d, T& RN, string out, clock_t time /*=cl
     vector<string>* edges_ptr;
 
     //initial node
+    //node.set_values(id, prev, cost, speed, dist)
     Search_node node(s, "-1", get_cost(s, d, "-1", RN), RN[s] -> speed, 0);
 
     //loading start node
@@ -67,11 +68,12 @@ void Search<T>::a_star(string s, string d, T& RN, string out, clock_t time /*=cl
         {
             e = *it;
             cost = get_cost(e, d, node.prev, RN);
-            speed = RN[node.id] -> speed;
+            speed = RN[e] -> speed;
             dist = node.total_dist + get_dist(node.id, e, RN);
 
             if (explored_map_ptr -> find(e) == explored_map_ptr -> end() && frontier_map_ptr -> find(e) == frontier_map_ptr -> end())
             {
+                //node.set_values(id, prev, cost, speed, dist)
                 node.set_values(e, node.id, cost, speed, dist);
                 frontier.push(node);
                 frontier_map_ptr -> insert(pair<string, string>(e, node.id));
@@ -103,7 +105,7 @@ bool Search<T>::check_for_update(T& RN)
     {
         for (map<string, float>::iterator it = expanded_tree_ptr->begin(); it != expanded_tree_ptr->end(); it++)
         {
-            cout<<RN[it->first]->speed<<", "<<it -> second<<endl;
+            //cout<<RN[it->first]->speed<<", "<<it -> second<<endl;
             if (RN[it->first]->speed != it->second)
             {
                 return true;

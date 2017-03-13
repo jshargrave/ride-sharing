@@ -27,6 +27,7 @@ struct Search_node
         id = i;
         prev = p;
         cost = c;
+        speed = s;
         total_dist = d;
     }
 

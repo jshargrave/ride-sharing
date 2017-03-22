@@ -7,14 +7,14 @@ using namespace std;
 template <typename T>
 Search<T>::Search()
 {
-	expanded_tree_ptr = NULL;
+	_expanded_tree_ptr = NULL;
 	upper_bound = 0;
 }
 
 template <typename T>
 Search<T>::~Search()
 {
-    delete expanded_tree_ptr;
+    delete _expanded_tree_ptr;
 }
 
 template <typename T>
@@ -37,7 +37,7 @@ void Search<T>::a_star(string s, string d, T& RN, string out, clock_t time /*=cl
 
     //initial node
     //node.set_values(id, prev, cost, speed, dist)
-    Search_node node(s, "-1", get_cost(s, d, "-1", RN), RN[s] -> speed, 0);
+    Search_node node(s, "-1", get_cost(s, d, "-1", RN), RN -> at(s) -> speed, 0);
 
     //loading start node
     frontier.push(node);
@@ -63,12 +63,12 @@ void Search<T>::a_star(string s, string d, T& RN, string out, clock_t time /*=cl
             break;
         }
 
-        edges_ptr = &RN[node.id] -> edges;
+        edges_ptr = &RN->at(node.id) -> edges;
         for(vector<string>::iterator it = edges_ptr -> begin(); it != edges_ptr -> end(); it++)
         {
             e = *it;
             cost = get_cost(e, d, node.prev, RN);
-            speed = RN[e] -> speed;
+            speed = RN->at(e) -> speed;
             dist = node.total_dist + get_dist(node.id, e, RN);
 
             if (explored_map_ptr -> find(e) == explored_map_ptr -> end() && frontier_map_ptr -> find(e) == frontier_map_ptr -> end())
@@ -84,14 +84,14 @@ void Search<T>::a_star(string s, string d, T& RN, string out, clock_t time /*=cl
     cout << "A*: " << (clock() - time) / (double) CLOCKS_PER_SEC << endl;
     //output(node.id, explored_map_ptr, out, time);
 
-	if (expanded_tree_ptr != NULL)
+	if (_expanded_tree_ptr != NULL)
 	{
-		delete expanded_tree_ptr;
+		delete _expanded_tree_ptr;
 	}
     delete frontier_map_ptr;
 
 
-    expanded_tree_ptr = explored_map_ptr;
+    _expanded_tree_ptr = explored_map_ptr;
     explored_map_ptr = NULL;
     edges_ptr = NULL;
     return;
@@ -99,14 +99,14 @@ void Search<T>::a_star(string s, string d, T& RN, string out, clock_t time /*=cl
 } //a_star
 
 template <typename T>
-bool Search<T>::check_for_update(T& RN)
+bool Search<T>::check_for_update(T& RN_ptr)
 {
-    if(expanded_tree_ptr != NULL)
+    if(_expanded_tree_ptr != NULL)
     {
-        for (map<string, float>::iterator it = expanded_tree_ptr->begin(); it != expanded_tree_ptr->end(); it++)
+        for (map<string, float>::iterator it = _expanded_tree_ptr->begin(); it != _expanded_tree_ptr->end(); it++)
         {
             //cout<<RN[it->first]->speed<<", "<<it -> second<<endl;
-            if (RN[it->first]->speed != it->second)
+            if (RN_ptr -> at(it->first)->speed != it->second)
             {
                 return true;
             }
@@ -140,12 +140,12 @@ template <typename T>
 double Search<T>::get_time(string s, string p, T& RN)
 {
     if(p != "-1") {
-        double lat1 = RN[s]->coords[0];
-        double lon1 = RN[s]->coords[1];
-        double lat2 = RN[p]->coords[0];
-        double lon2 = RN[p]->coords[1];
+        double lat1 = RN->at(s)->coords[0];
+        double lon1 = RN->at(s)->coords[1];
+        double lat2 = RN->at(p)->coords[0];
+        double lon2 = RN->at(p)->coords[1];
 
-        return RN[p]->speed / distanceEarth(lat1, lon1, lat2, lon2);
+        return RN->at(p)->speed / distanceEarth(lat1, lon1, lat2, lon2);
     } else return 0;
 }
 
@@ -153,10 +153,10 @@ double Search<T>::get_time(string s, string p, T& RN)
 template <typename T>
 double Search<T>::get_dist(string s, string d, T& RN)
 {
-    double lat1 = RN[s] -> coords[0];
-    double lon1 = RN[s] -> coords[1];
-    double lat2 = RN[d] -> coords[0];
-    double lon2 = RN[d] -> coords[1];
+    double lat1 = RN->at(s) -> coords[0];
+    double lon1 = RN->at(s) -> coords[1];
+    double lat2 = RN->at(d) -> coords[0];
+    double lon2 = RN->at(d) -> coords[1];
 
     return distanceEarth(lat1, lon1, lat2, lon2);
 }

@@ -36,22 +36,25 @@ struct RN_node
 
 class RoadNetwork
 {
-    public:
+    private:
+        map<string, RN_node*>* _RN;
 
-    map<string, RN_node*> RN;
+    public:
 
     RoadNetwork()
     {
+        _RN = new map<string, RN_node*>;
         load_nodes();
         load_edges();
     }
 
     ~RoadNetwork()
     {
-        for(map<string, RN_node*>::iterator it = RN.begin(); it != RN.end(); it++)
+        for(map<string, RN_node*>::iterator it = _RN -> begin(); it != _RN -> end(); it++)
         {
             delete it -> second;
         }
+        delete _RN;
     }
 
     void load_nodes()
@@ -85,7 +88,7 @@ class RoadNetwork
 
             if(id != "") {
                 node_ptr = new RN_node(random_speed(), lat, lon);
-                RN[id] = node_ptr;
+                _RN -> insert(pair<string, RN_node*>(id, node_ptr));
                 i++;
             } else cout<<"Error: tried to insert blank node"<<endl;
         }
@@ -119,7 +122,7 @@ class RoadNetwork
 
             if(id != "")
             {
-                RN[id] -> edges.push_back(edge);
+                _RN -> at(id) -> edges.push_back(edge);
                 i++;
             } else cout<<"Error: tried to insert blank edge"<<endl;
         }
@@ -127,6 +130,8 @@ class RoadNetwork
 
         file.close();
     }
+
+    map<string, RN_node*>*& RN(){return _RN;}
 
     float random_speed()
     {

@@ -53,7 +53,7 @@ template <typename T>
 class Search
 {
     private:
-        map<string, float>* expanded_tree_ptr;
+        map<string, float>* _expanded_tree_ptr;
 
         double upper_bound;
 
@@ -64,13 +64,15 @@ class Search
     ~Search();
 
     double get_cost(string s, string d, string p, T& RN);
-
+    map<string, float>* expanded_tree_ptr(){return _expanded_tree_ptr;}
     void a_star(string s, string d, T& RN, string out, clock_t time=clock());
     bool check_for_update(T& RN);
     void output(string goal, map<string, string>* &explored, string out, clock_t time);
     double get_time(string s, string p, T& RN);
     // Returns the straight line distance between two nodes s, and d.
     double get_dist(string s, string d, T& RN);
+
+
     // This function converts decimal degrees to radians
     double deg2rad(double deg);
     //  This function converts radians to decimal degrees
@@ -85,6 +87,7 @@ class Search
      * @return The distance between the two points in kilometers
      */
     double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d);
+
 };
 #include "Search.hpp"
 #endif // SEARCH_H

@@ -6,6 +6,7 @@
 #include <map>
 #include <math.h>
 #include <algorithm>
+#include <limits>
 using namespace std;
 
 #ifndef SEARCH_H
@@ -54,8 +55,7 @@ class Search
 {
     private:
         map<string, float>* _expanded_tree_ptr;
-
-        double upper_bound;
+        double _upper_bound;
 
         typedef priority_queue<Search_node, vector<Search_node>, LessDistance> frontier_type;
 
@@ -65,6 +65,7 @@ class Search
 
     double get_cost(string s, string d, string p, T& RN);
     map<string, float>* expanded_tree_ptr(){return _expanded_tree_ptr;}
+    double upper_bound(){return _upper_bound;}
     void a_star(string s, string d, T& RN, string out, clock_t time=clock());
     bool check_for_update(T& RN);
     void output(string goal, map<string, string>* &explored, string out, clock_t time);

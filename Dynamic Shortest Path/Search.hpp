@@ -8,7 +8,7 @@ template <typename T>
 Search<T>::Search()
 {
 	_expanded_tree_ptr = NULL;
-	upper_bound = 0;
+	_upper_bound = numeric_limits<double>::infinity();
 }
 
 template <typename T>
@@ -71,7 +71,7 @@ void Search<T>::a_star(string s, string d, T& RN, string out, clock_t time /*=cl
             speed = RN->at(e) -> speed;
             dist = node.total_dist + get_dist(node.id, e, RN);
 
-            if (explored_map_ptr -> find(e) == explored_map_ptr -> end() && frontier_map_ptr -> find(e) == frontier_map_ptr -> end())
+            if (explored_map_ptr -> find(e) == explored_map_ptr -> end() && frontier_map_ptr -> find(e) == frontier_map_ptr -> end() && dist <= _upper_bound)
             {
                 //node.set_values(id, prev, cost, speed, dist)
                 node.set_values(e, node.id, cost, speed, dist);
@@ -92,6 +92,7 @@ void Search<T>::a_star(string s, string d, T& RN, string out, clock_t time /*=cl
 
 
     _expanded_tree_ptr = explored_map_ptr;
+    _upper_bound = node.total_dist;
     explored_map_ptr = NULL;
     edges_ptr = NULL;
     return;
